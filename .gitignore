@@ -1,0 +1,119 @@
+# Markdown files (except README.md)
+*.md
+!README.md
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# IDE and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-*
+.atom/
+
+# Operating System
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Build and Dist
+dist/
+build/
+.cache/
+.parcel-cache/
+out/
+
+# Uploads and Media
+uploads/
+recordings/
+videos/
+temp/
+
+# MongoDB
+data/
+*.mdb
+*.ldb
+
+# Coverage
+coverage/
+*.lcov
+.nyc_output/
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.pdf
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.blg
+*.bbl
+*.nav
+*.snm
+*.vrb
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+
+# Compressed files (except releases)
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Security
+*.pem
+*.key
+*.cert
+*.crt
+private/
+secrets/
+
+# PM2
+.pm2/
+ecosystem.config.js
+
+# FFMPEG temporary files
+*.tmp
+*.temp
+
+# Test files
+test-results/
+.nyc_output/

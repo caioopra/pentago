@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cadastro - Pentago Web</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>🎮 Pentago Web</h1>
+      <a href="/pages/index.html" class="btn-back">← Voltar</a>
+    </header>
+
+    <main>
+      <div class="form-container">
+        <h2>Cadastrar</h2>
+
+        <form id="registerForm">
+          <div class="form-group">
+            <label for="name">Nome:</label>
+            <input type="text" id="name" name="name" required title="Por favor, preencha seu nome.">
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required title="Por favor, insira um email válido.">
+          </div>
+
+          <div class="form-group">
+            <label for="password">Senha:</label>
+            <input type="password" id="password" name="password" required minlength="6" title="A senha deve ter no mínimo 6 caracteres.">
+          </div>
+
+          <div class="form-group">
+            <label for="age">Idade:</label>
+            <input type="number" id="age" name="age" required min="13" max="120" title="A idade mínima é 13 anos.">
+          </div>
+
+          <button type="submit" class="btn btn-primary">Cadastrar</button>
+        </form>
+
+        <p class="form-footer">
+          Já tem conta? <a href="/pages/login.html">Faça login</a>
+        </p>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/utils/api.js"></script>
+  <script>
+    // Custom validation messages in Portuguese
+    const form = document.getElementById('registerForm');
+    const passwordInput = document.getElementById('password');
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const ageInput = document.getElementById('age');
+
+    // Function to update validation message
+    function updateValidationMessage(input) {
+      if (input.validity.valueMissing) {
+        if (input === nameInput) {
+          input.setCustomValidity('Por favor, preencha seu nome.');
+        } else if (input === emailInput) {
+          input.setCustomValidity('Por favor, preencha seu email.');
+        } else if (input === passwordInput) {
+          input.setCustomValidity('Por favor, preencha este campo.');
+        } else if (input === ageInput) {
+          input.setCustomValidity('Por favor, preencha sua idade.');
+        }
+      } else if (input.validity.typeMismatch && input === emailInput) {
+        input.setCustomValidity('Por favor, insira um email válido.');
+      } else if (input.validity.tooShort && input === passwordInput) {
+        input.setCustomValidity(`A senha deve ter no mínimo ${input.minLength} caracteres.`);
+      } else if (input.validity.rangeUnderflow && input === ageInput) {
+        input.setCustomValidity('A idade mínima é 13 anos.');
+      } else if (input.validity.rangeOverflow && input === ageInput) {
+        input.setCustomValidity('Por favor, insira uma idade válida.');
+      } else {
+        input.setCustomValidity('');
+      }
+    }
+
+    // Set custom validation messages on invalid event
+    [nameInput, emailInput, passwordInput, ageInput].forEach(input => {
+      input.addEventListener('invalid', function(e) {
+        e.preventDefault();
+        updateValidationMessage(this);
+      });
+
+      input.addEventListener('input', function() {
+        this.setCustomValidity('');
+      });
+
+      input.addEventListener('change', function() {
+        updateValidationMessage(this);
+      });
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Validate all inputs before submitting
+      [nameInput, emailInput, passwordInput, ageInput].forEach(input => {
+        updateValidationMessage(input);
+      });
+
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const formData = {
+        name: nameInput.value,
+        email: emailInput.value,
+        password: passwordInput.value,
+        age: ageInput.value
+      };
+
+      // TODO: Implementar chamada API de registro
+      console.log('Register:', formData);
+      alert('Funcionalidade de cadastro será implementada em breve!');
+    });
+  </script>
+</body>
+
+</html>

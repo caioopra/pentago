@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Pentago Web</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>🎮 Pentago Web</h1>
+      <a href="/pages/index.html" class="btn-back">← Voltar</a>
+    </header>
+
+    <main>
+      <div class="form-container">
+        <h2>Entrar</h2>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Senha:</label>
+            <input type="password" id="password" name="password" required>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Entrar</button>
+        </form>
+
+        <p class="form-footer">
+          Não tem conta? <a href="/pages/register.html">Cadastre-se</a>
+        </p>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/utils/api.js"></script>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      // TODO: Implementar chamada API de login
+      console.log('Login:', {email, password});
+      alert('Funcionalidade de login será implementada em breve!');
+    });
+  </script>
+</body>
+
+</html>
