@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meu Perfil - Pentago Web</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>🎮 Pentago Web</h1>
+      <a href="/pages/index.html" class="btn-back">← Voltar</a>
+    </header>
+
+    <main>
+      <div id="message" style="display: none; margin-bottom: 1rem;"></div>
+
+      <!-- Profile Card -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Meu Perfil</h2>
+        </div>
+        <div class="card-body">
+          <!-- Avatar Section -->
+          <div class="avatar-upload">
+            <img id="avatarPreview" src="/assets/img/avatars/default.png" alt="Avatar" class="avatar-preview">
+            <input type="file" id="avatarInput" accept="image/*">
+            <label for="avatarInput" class="btn btn-secondary btn-small avatar-upload-btn">
+              Alterar Avatar
+            </label>
+            <button id="uploadAvatarBtn" class="btn btn-primary btn-small" style="display: none;">
+              Salvar Avatar
+            </button>
+          </div>
+
+          <!-- Profile Form -->
+          <form id="profileForm" style="margin-top: 30px;">
+            <div class="form-group">
+              <label for="name">Nome:</label>
+              <input type="text" id="name" name="name" required>
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email:</label>
+              <input type="email" id="email" name="email" disabled
+                     style="background-color: var(--bg-secondary); cursor: not-allowed;">
+              <small style="color: var(--text-secondary);">O email não pode ser alterado</small>
+            </div>
+
+            <div class="form-group">
+              <label for="age">Idade:</label>
+              <input type="number" id="age" name="age" required min="13" max="120">
+            </div>
+
+            <div class="form-group">
+              <label for="city">Cidade:</label>
+              <input type="text" id="city" name="city">
+            </div>
+
+            <div class="form-group">
+              <label for="state">Estado:</label>
+              <input type="text" id="state" name="state">
+            </div>
+
+            <div class="form-group">
+              <label for="country">País:</label>
+              <input type="text" id="country" name="country">
+            </div>
+
+            <div class="form-group">
+              <label>Pontuação Atual:</label>
+              <div style="padding: 12px; background-color: var(--bg-secondary); border-radius: 5px;">
+                <span id="score" style="font-size: 1.5rem; font-weight: bold; color: var(--accent-color);">0</span> pontos
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Membro desde:</label>
+              <div id="memberSince" style="padding: 12px; background-color: var(--bg-secondary); border-radius: 5px;">
+                Carregando...
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+              Salvar Alterações
+            </button>
+          </form>
+
+          <!-- Danger Zone -->
+          <div style="margin-top: 40px; padding: 20px; background-color: var(--error-bg); border-radius: 8px; border: 1px solid var(--error-border);">
+            <h3 style="color: var(--error-text); margin-bottom: 10px;">Zona de Perigo</h3>
+            <p style="color: var(--error-text); font-size: 0.9rem; margin-bottom: 15px;">
+              Deletar sua conta é uma ação permanente e não pode ser desfeita.
+            </p>
+            <button id="deleteAccountBtn" class="btn btn-danger">
+              Deletar Conta
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Change Password Section -->
+      <div class="card" style="margin-top: 20px;">
+        <div class="card-header">
+          <h3 class="card-title">Alterar Senha</h3>
+        </div>
+        <div class="card-body">
+          <form id="passwordForm">
+            <div class="form-group">
+              <label for="currentPassword">Senha Atual:</label>
+              <input type="password" id="currentPassword" name="currentPassword" required minlength="6">
+            </div>
+
+            <div class="form-group">
+              <label for="newPassword">Nova Senha:</label>
+              <input type="password" id="newPassword" name="newPassword" required minlength="6">
+            </div>
+
+            <div class="form-group">
+              <label for="confirmPassword">Confirmar Nova Senha:</label>
+              <input type="password" id="confirmPassword" name="confirmPassword" required minlength="6">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+              Atualizar Senha
+            </button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/utils/api.js"></script>
+  <script src="/js/pages/profile.js"></script>
+</body>
+
+</html>
