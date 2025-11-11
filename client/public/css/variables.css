@@ -1,0 +1,61 @@
+/* ========================================
+   CSS VARIABLES & THEME
+   ======================================== */
+
+/* Light theme (default) */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --accent-color: #4CAF50;
+  --accent-hover: #45a049;
+  --border-color: #ddd;
+  --shadow: rgba(0, 0, 0, 0.1);
+
+  /* Alert colors */
+  --success-bg: #d4edda;
+  --success-text: #155724;
+  --success-border: #c3e6cb;
+
+  --error-bg: #f8d7da;
+  --error-text: #721c24;
+  --error-border: #f5c6cb;
+
+  --info-bg: #d1ecf1;
+  --info-text: #0c5460;
+  --info-border: #bee5eb;
+
+  --warning-bg: #fff3cd;
+  --warning-text: #856404;
+  --warning-border: #ffeeba;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --accent-color: #66BB6A;
+  --accent-hover: #5cb860;
+  --border-color: #444;
+  --shadow: rgba(0, 0, 0, 0.3);
+
+  /* Alert colors - dark theme */
+  --success-bg: #1e4620;
+  --success-text: #a3d9a5;
+  --success-border: #2d5a2e;
+
+  --error-bg: #4a1f1f;
+  --error-text: #f1aeb5;
+  --error-border: #5a2424;
+
+  --info-bg: #1f3a42;
+  --info-text: #9fcdde;
+  --info-border: #2a4a54;
+
+  --warning-bg: #4a3f1a;
+  --warning-text: #f3d788;
+  --warning-border: #5a4f2a;
+}

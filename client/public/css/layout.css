@@ -1,0 +1,103 @@
+/* ========================================
+   LAYOUT STRUCTURE
+   ======================================== */
+
+/* Header */
+header {
+  text-align: center;
+  padding: 40px 20px;
+  background-color: var(--bg-primary);
+  border-radius: 10px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 10px var(--shadow);
+  position: relative;
+}
+
+header h1 {
+  font-size: 2.5rem;
+  color: var(--accent-color);
+  margin-bottom: 10px;
+}
+
+header p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+.btn-back {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 8px 15px;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+}
+
+.btn-back:hover {
+  background-color: var(--bg-secondary);
+}
+
+/* Main content */
+main {
+  background-color: var(--bg-primary);
+  padding: 40px;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px var(--shadow);
+}
+
+/* Welcome section */
+.welcome-section {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.welcome-section h2 {
+  color: var(--text-primary);
+  margin-bottom: 15px;
+}
+
+.welcome-section p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+/* Info section */
+.info-section {
+  margin-top: 40px;
+  padding: 20px;
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+}
+
+.info-section h3 {
+  color: var(--text-primary);
+  margin-bottom: 15px;
+}
+
+.info-section ul {
+  list-style-position: inside;
+  color: var(--text-secondary);
+}
+
+.info-section li {
+  padding: 8px 0;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  margin-top: 40px;
+  padding: 20px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}

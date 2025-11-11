@@ -1,0 +1,109 @@
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
+/* Tablet */
+@media (max-width: 992px) {
+  .container {
+    padding: 15px;
+  }
+
+  header {
+    padding: 30px 15px;
+  }
+
+  main {
+    padding: 30px 20px;
+  }
+
+  .form-container {
+    max-width: 100%;
+    padding: 0 20px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  header h1 {
+    font-size: 2rem;
+  }
+
+  header p {
+    font-size: 1rem;
+  }
+
+  .actions {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  main {
+    padding: 20px;
+  }
+
+  .btn-back {
+    position: static;
+    display: block;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 1rem;
+  }
+
+  .btn-small {
+    width: auto;
+    padding: 8px 15px;
+    font-size: 0.85rem;
+  }
+
+  .form-container {
+    padding: 0 10px;
+  }
+
+  .card {
+    padding: 15px;
+  }
+
+  .welcome-section h2 {
+    font-size: 1.5rem;
+  }
+
+  .welcome-section p {
+    font-size: 1rem;
+  }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+  header h1 {
+    font-size: 1.75rem;
+  }
+
+  .container {
+    padding: 10px;
+  }
+
+  main {
+    padding: 15px;
+  }
+
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  .avatar-large {
+    width: 80px;
+    height: 80px;
+  }
+
+  .avatar-preview {
+    width: 100px;
+    height: 100px;
+  }
+}
