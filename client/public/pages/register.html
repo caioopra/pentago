@@ -19,6 +19,8 @@
       <div class="form-container">
         <h2>Cadastrar</h2>
 
+        <div id="message" style="display: none; margin-bottom: 1rem; padding: 0.75rem; border-radius: 4px;"></div>
+
         <form id="registerForm">
           <div class="form-group">
             <label for="name">Nome:</label>
@@ -103,6 +105,9 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
 
+      // Clear previous messages
+      UIUtils.clearMessages('message');
+
       // Validate all inputs before submitting
       [nameInput, emailInput, passwordInput, ageInput].forEach(input => {
         updateValidationMessage(input);
@@ -114,15 +119,35 @@
       }
 
       const formData = {
-        name: nameInput.value,
-        email: emailInput.value,
+        name: nameInput.value.trim(),
+        email: emailInput.value.trim(),
         password: passwordInput.value,
-        age: ageInput.value
+        age: parseInt(ageInput.value)
       };
 
-      // TODO: Implementar chamada API de registro
-      console.log('Register:', formData);
-      alert('Funcionalidade de cadastro será implementada em breve!');
+      // Disable submit button
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Cadastrando...';
+
+      try {
+        const response = await AuthAPI.register(formData);
+
+        if (response.success) {
+          UIUtils.showSuccess('Cadastro realizado com sucesso! Redirecionando...', 'message');
+
+          // Redirect to game page after 1.5 seconds
+          setTimeout(() => {
+            window.location.href = '/pages/index.html';
+          }, 1500);
+        }
+      } catch (error) {
+        console.error('Erro no cadastro:', error);
+        UIUtils.showError(error.message || 'Erro ao cadastrar. Por favor, tente novamente.', 'message');
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
     });
   </script>
 </body>

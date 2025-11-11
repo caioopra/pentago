@@ -16,6 +16,8 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 
 // Servir arquivos estáticos do cliente
 app.use(express.static(path.join(__dirname, '../../client/public')));
@@ -29,8 +31,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Rotas (serão adicionadas)
-// app.use('/api/auth', require('./routes/auth'));
+// Rotas da API
+app.use('/api/auth', require('./routes/auth'));
 // app.use('/api/users', require('./routes/users'));
 // app.use('/api/games', require('./routes/games'));
 
