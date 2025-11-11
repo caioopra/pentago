@@ -20,7 +20,20 @@ const userSchema = new mongoose.Schema({
   },
   age: {
     type: Number,
-    required: true
+    required: true,
+    min: 13
+  },
+  city: {
+    type: String,
+    trim: true
+  },
+  state: {
+    type: String,
+    trim: true
+  },
+  country: {
+    type: String,
+    trim: true
   },
   avatar: {
     type: String,
@@ -33,6 +46,11 @@ const userSchema = new mongoose.Schema({
   isOnline: {
     type: Boolean,
     default: false
+  },
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
   }
 }, {
   timestamps: true
