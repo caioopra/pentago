@@ -53,14 +53,17 @@ class AuthManager {
 async function apiRequest(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
 
-  const defaultHeaders = {
-    'Content-Type': 'application/json',
-  };
+  const defaultHeaders = {};
 
   // Adicionar token de autenticação se existir
   const token = AuthManager.getToken();
   if (token) {
     defaultHeaders['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Only set Content-Type for non-FormData requests
+  if (!(options.body instanceof FormData)) {
+    defaultHeaders['Content-Type'] = 'application/json';
   }
 
   const config = {
@@ -192,12 +195,17 @@ const UIUtils = {
     if (elementId) {
       const element = document.getElementById(elementId);
       if (element) {
-        element.textContent = message;
+        element.innerHTML = `<strong>Erro:</strong> ${message}`;
         element.style.display = 'block';
         element.className = 'alert alert-error';
+
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+          this.clearMessages(elementId);
+        }, 10000);
       }
     } else {
-      alert(message);
+      alert('Erro: ' + message);
     }
   },
 
@@ -208,12 +216,33 @@ const UIUtils = {
     if (elementId) {
       const element = document.getElementById(elementId);
       if (element) {
-        element.textContent = message;
+        element.innerHTML = `<strong>Sucesso:</strong> ${message}`;
         element.style.display = 'block';
         element.className = 'alert alert-success';
       }
     } else {
-      alert(message);
+      alert('Sucesso: ' + message);
+    }
+  },
+
+  /**
+   * Mostra mensagem de informação
+   */
+  showInfo(message, elementId = null) {
+    if (elementId) {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.innerHTML = `<strong>Info:</strong> ${message}`;
+        element.style.display = 'block';
+        element.className = 'alert alert-info';
+
+        // Auto-hide after 8 seconds
+        setTimeout(() => {
+          this.clearMessages(elementId);
+        }, 8000);
+      }
+    } else {
+      alert('Info: ' + message);
     }
   },
 
@@ -223,8 +252,9 @@ const UIUtils = {
   clearMessages(elementId) {
     const element = document.getElementById(elementId);
     if (element) {
-      element.textContent = '';
+      element.innerHTML = '';
       element.style.display = 'none';
+      element.className = 'alert';
     }
   },
 
@@ -235,6 +265,19 @@ const UIUtils = {
     setTimeout(() => {
       window.location.href = url;
     }, delay);
+  },
+
+  /**
+   * Adiciona classe de loading ao botão
+   */
+  setButtonLoading(button, loading = true) {
+    if (loading) {
+      button.classList.add('btn-loading');
+      button.disabled = true;
+    } else {
+      button.classList.remove('btn-loading');
+      button.disabled = false;
+    }
   }
 };
 
@@ -259,3 +302,76 @@ function redirectIfAuthenticated(redirectTo = '/pages/game.html') {
   }
   return false;
 }
+
+/**
+ * API de Usuários
+ */
+const UserAPI = {
+  /**
+   * Obter usuário por ID
+   */
+  async getUser(userId) {
+    return await apiRequest(`/users/${userId}`, {
+      method: 'GET'
+    });
+  },
+
+  /**
+   * Atualizar perfil do usuário
+   */
+  async updateProfile(userId, userData) {
+    return await apiRequest(`/users/${userId}`, {
+      method: 'PUT',
+      body: userData
+    });
+  },
+
+  /**
+   * Atualizar avatar
+   */
+  async updateAvatar(userId, avatarFile) {
+    const formData = new FormData();
+    formData.append('avatar', avatarFile);
+
+    return await apiRequest(`/users/${userId}/avatar`, {
+      method: 'PUT',
+      headers: {
+        // Don't set Content-Type for FormData, browser will set it with boundary
+      },
+      body: formData
+    });
+  },
+
+  /**
+   * Deletar conta
+   */
+  async deleteAccount(userId) {
+    return await apiRequest(`/users/${userId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  /**
+   * Obter ranking/leaderboard
+   */
+  async getLeaderboard(limit = 10) {
+    return await apiRequest(`/users/leaderboard?limit=${limit}`, {
+      method: 'GET'
+    });
+  },
+
+  /**
+   * Listar usuários (com paginação)
+   */
+  async getUsers(page = 1, limit = 10, filters = {}) {
+    const queryParams = new URLSearchParams({
+      page,
+      limit,
+      ...filters
+    });
+
+    return await apiRequest(`/users?${queryParams}`, {
+      method: 'GET'
+    });
+  }
+};
