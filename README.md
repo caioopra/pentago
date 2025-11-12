@@ -11,8 +11,8 @@
 
 ## 👥 Equipe
 
-- **Caio Prá Silva** - Back-end & DevOps
-- **Pedro Nack Martins** - Front-end & UI/UX
+- **Caio Prá Silva**
+- **Pedro Nack Martins**
 
 ## 📖 Sobre o Projeto
 
