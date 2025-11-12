@@ -1,12 +1,24 @@
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
 const connectDB = require('./config/database');
+const GameSocketService = require('./services/gameSocketService');
 
 const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 
 // Conectar ao MongoDB
@@ -25,7 +37,7 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts for development
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'"],
+      connectSrc: ["'self'", "ws:", "wss:"], // Allow WebSocket connections
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],
@@ -38,6 +50,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
+
+// Inicializar Socket.io para o jogo
+const gameSocketService = new GameSocketService(io);
+gameSocketService.initialize();
+console.log('🎮 Socket.io inicializado para partidas em tempo real');
 
 // Servir arquivos estáticos do cliente
 app.use(express.static(path.join(__dirname, '../../client/public')));
@@ -57,7 +74,7 @@ app.get('/api/health', (req, res) => {
 // Rotas da API
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
-// app.use('/api/games', require('./routes/games'));
+app.use('/api/games', require('./routes/games'));
 
 // Debug routes (apenas desenvolvimento - remover em produção)
 if (process.env.NODE_ENV !== 'production') {
@@ -69,10 +86,10 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../../client/public/pages/index.html'));
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
+// Iniciar servidor HTTP com Socket.io
+server.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log(`🌐 URL: http://localhost:${PORT}`);
 });
 
-module.exports = app;
+module.exports = { app, server, io };

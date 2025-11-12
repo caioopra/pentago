@@ -1,45 +1,219 @@
 /**
- * Pentago Game - Client-side logic
- * Adaptado da implementação original para integração com o sistema web
+ * Pentago Game - Multiplayer com Socket.io
+ * Cliente gerenciado pelo servidor via WebSocket
  */
 
-class PentagoGame {
+class PentagoGameClient {
   constructor() {
-    // Estado do jogo
-    this.board = Array(4).fill().map(() => Array(9).fill(0));
-    this.currentPlayer = 1;
-    this.gamePhase = 'place'; // 'place' ou 'rotate'
-    this.gameMode = '2player'; // '2player' ou 'bot'
-    this.gameOver = false;
-    this.winner = null;
+    // Socket.io
+    this.socket = null;
+    this.connected = false;
 
-    // Informações dos jogadores
-    this.players = {
-      1: {
-        name: 'Jogador 1',
-        avatar: '/assets/img/avatars/default.png',
-        score: 0
-      },
-      2: {
-        name: 'Jogador 2',
-        avatar: '/assets/img/avatars/default.png',
-        score: 0
-      }
-    };
+    // Estado do jogo (sincronizado com servidor)
+    this.gameId = null;
+    this.playerNumber = null; // 1 ou 2
+    this.game = null; // Objeto Game do servidor
 
-    // Inicializar interface e eventos
-    this.initializeEventListeners();
-    this.initializePlayers();
-    this.updateDisplay();
+    // Estado local temporário
+    this.awaitingRotation = false;
+
+    // Inicializar
+    this.init();
   }
 
   /**
-   * Inicializa os event listeners
+   * Inicialização
    */
-  initializeEventListeners() {
-    // Botão de reset
-    document.getElementById('resetBtn').addEventListener('click', () => this.resetGame());
+  async init() {
+    // Verificar autenticação
+    const token = localStorage.getItem('token');
 
+    if (!token) {
+      this.showMessage('Você precisa estar logado para jogar!', 'error');
+      setTimeout(() => {
+        window.location.href = '/pages/login.html';
+      }, 2000);
+      return;
+    }
+
+    // Conectar ao Socket.io
+    this.connectSocket(token);
+
+    // Inicializar event listeners da UI
+    this.initializeUIListeners();
+
+    // Criar ou entrar em partida
+    await this.findOrCreateGame();
+  }
+
+  /**
+   * Conectar ao Socket.io
+   */
+  connectSocket(token) {
+    this.socket = io('http://localhost:3000', {
+      transports: ['websocket', 'polling']
+    });
+
+    // Evento: Conectado
+    this.socket.on('connect', () => {
+      console.log('✅ Conectado ao servidor Socket.io');
+      this.connected = true;
+
+      // Autenticar socket
+      this.socket.emit('authenticate', token);
+    });
+
+    // Evento: Autenticado
+    this.socket.on('authenticated', (data) => {
+      console.log('✅ Socket autenticado');
+    });
+
+    // Evento: Erro de autenticação
+    this.socket.on('auth_error', (data) => {
+      console.error('❌ Erro de autenticação:', data.message);
+      this.showMessage('Erro de autenticação. Faça login novamente.', 'error');
+      setTimeout(() => {
+        localStorage.removeItem('token');
+        window.location.href = '/pages/login.html';
+      }, 2000);
+    });
+
+    // Evento: Entrou na partida
+    this.socket.on('game_joined', (data) => {
+      console.log('🎮 Entrou na partida:', data);
+      this.game = data.game;
+      this.playerNumber = data.playerNumber;
+      this.updateUI();
+
+      if (this.game.status === 'waiting') {
+        this.showMessage('Aguardando outro jogador...', 'info');
+      }
+    });
+
+    // Evento: Partida iniciada
+    this.socket.on('game_start', (data) => {
+      console.log('🎮 Partida iniciada!', data);
+      this.game = data.game;
+      this.hideMessage();
+      this.showMessage('A partida começou! Boa sorte!', 'success');
+      setTimeout(() => this.hideMessage(), 3000);
+      this.updateUI();
+    });
+
+    // Evento: Oponente conectou
+    this.socket.on('opponent_connected', (data) => {
+      console.log('👤 Oponente conectado');
+      this.hideMessage();
+      this.showMessage('Oponente conectado! A partida vai começar!', 'success');
+      setTimeout(() => this.hideMessage(), 3000);
+    });
+
+    // Evento: Oponente desconectou
+    this.socket.on('opponent_disconnected', (data) => {
+      console.log('⚠️ Oponente desconectou');
+      this.showMessage('Oponente desconectou. Aguardando reconexão...', 'warning');
+    });
+
+    // Evento: Peça colocada
+    this.socket.on('piece_placed', (data) => {
+      console.log('📍 Peça colocada:', data);
+      this.game.boardState = data.gameState.boardState;
+      this.game.currentTurn = data.gameState.currentTurn;
+      this.game.gamePhase = data.gameState.gamePhase;
+      this.game.status = data.gameState.status;
+      this.updateUI();
+    });
+
+    // Evento: Quadrante rotacionado
+    this.socket.on('quadrant_rotated', (data) => {
+      console.log('🔄 Quadrante rotacionado:', data);
+      this.game.boardState = data.gameState.boardState;
+      this.game.currentTurn = data.gameState.currentTurn;
+      this.game.gamePhase = data.gameState.gamePhase;
+      this.game.status = data.gameState.status;
+
+      // Animação de rotação
+      const quadrantElement = document.getElementById(`quadrant-${data.quadrant}`);
+      quadrantElement.classList.add('rotate-animation');
+      setTimeout(() => {
+        quadrantElement.classList.remove('rotate-animation');
+      }, 500);
+
+      this.updateUI();
+    });
+
+    // Evento: Fim de jogo
+    this.socket.on('game_over', (data) => {
+      console.log('🏁 Fim de jogo:', data);
+      this.game = data.game;
+      this.handleGameOver(data);
+    });
+
+    // Evento: Erro
+    this.socket.on('error', (data) => {
+      console.error('❌ Erro:', data.message);
+      this.showMessage(data.message, 'error');
+      setTimeout(() => this.hideMessage(), 3000);
+    });
+
+    // Evento: Desconectado
+    this.socket.on('disconnect', () => {
+      console.log('🔌 Desconectado do servidor');
+      this.connected = false;
+      this.showMessage('Desconectado do servidor. Tentando reconectar...', 'warning');
+    });
+  }
+
+  /**
+   * Encontrar ou criar partida
+   */
+  async findOrCreateGame() {
+    try {
+      const token = localStorage.getItem('token');
+
+      const response = await fetch('/api/games/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        if (data.gameId) {
+          // Usuário já está em uma partida
+          this.gameId = data.gameId;
+          this.showMessage('Reconectando à sua partida...', 'info');
+        } else {
+          this.showMessage(data.message, 'error');
+          return;
+        }
+      } else {
+        this.gameId = data.game._id;
+        this.playerNumber = data.playerNumber;
+        this.game = data.game;
+
+        if (data.message.includes('Aguardando')) {
+          this.showMessage(data.message, 'info');
+        } else {
+          this.showMessage(data.message, 'success');
+        }
+      }
+
+      // Entrar na partida via Socket.io
+      this.socket.emit('join_game', { gameId: this.gameId });
+    } catch (error) {
+      console.error('Erro ao criar/entrar em partida:', error);
+      this.showMessage('Erro ao conectar à partida.', 'error');
+    }
+  }
+
+  /**
+   * Inicializar event listeners da UI
+   */
+  initializeUIListeners() {
     // Células do tabuleiro
     document.querySelectorAll('.cell').forEach(cell => {
       cell.addEventListener('click', (e) => this.handleCellClick(e));
@@ -49,255 +223,121 @@ class PentagoGame {
     document.querySelectorAll('.rotate-btn').forEach(btn => {
       btn.addEventListener('click', (e) => this.handleRotateClick(e));
     });
+
+    // Botão de novo jogo (sair e criar nova partida)
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (confirm('Deseja sair desta partida e começar uma nova?')) {
+        this.leaveGame();
+        window.location.reload();
+      }
+    });
   }
 
   /**
-   * Inicializa informações dos jogadores
-   * Futuramente vai buscar dados do servidor
-   */
-  async initializePlayers() {
-    // TODO: Buscar informações dos jogadores autenticados
-    // Por enquanto, usa dados padrão
-    this.updatePlayerUI(1, this.players[1]);
-    this.updatePlayerUI(2, this.players[2]);
-  }
-
-  /**
-   * Atualiza a UI com informações do jogador
-   */
-  updatePlayerUI(playerNumber, playerData) {
-    document.getElementById(`player${playerNumber}Name`).textContent = playerData.name;
-    document.getElementById(`player${playerNumber}Avatar`).src = playerData.avatar;
-    document.getElementById(`player${playerNumber}Score`).textContent = playerData.score;
-  }
-
-  /**
-   * Manipula clique em uma célula do tabuleiro
+   * Handler: Clique em célula
    */
   handleCellClick(e) {
-    // Validações
-    if (this.gameOver || this.gamePhase !== 'place') return;
+    if (!this.canPlay()) return;
+
+    if (this.game.gamePhase !== 'place') {
+      this.showMessage('Você precisa rotacionar um quadrante primeiro!', 'warning');
+      setTimeout(() => this.hideMessage(), 2000);
+      return;
+    }
 
     const quadrant = parseInt(e.target.dataset.quadrant);
     const cell = parseInt(e.target.dataset.cell);
 
-    // Verifica se a célula está vazia
-    if (this.board[quadrant][cell] !== 0) return;
-
-    // Coloca a peça
-    this.placePiece(quadrant, cell);
-    this.updateDisplay();
-
-    // Verifica vitória após colocar peça
-    if (this.checkWinCondition()) {
-      this.endGame(this.currentPlayer);
+    // Verificar se célula está vazia
+    if (this.game.boardState[quadrant][cell] !== 0) {
+      this.showMessage('Esta célula já está ocupada!', 'warning');
+      setTimeout(() => this.hideMessage(), 2000);
       return;
     }
 
-    // Muda para fase de rotação
-    this.gamePhase = 'rotate';
-    this.updateDisplay();
+    // Enviar movimento ao servidor
+    this.socket.emit('place_piece', {
+      gameId: this.gameId,
+      quadrant,
+      cell
+    });
   }
 
   /**
-   * Manipula clique em botão de rotação
+   * Handler: Clique em botão de rotação
    */
   handleRotateClick(e) {
-    // Validações
-    if (this.gameOver || this.gamePhase !== 'rotate') return;
+    if (!this.canPlay()) return;
+
+    if (this.game.gamePhase !== 'rotate') {
+      this.showMessage('Você precisa colocar uma peça primeiro!', 'warning');
+      setTimeout(() => this.hideMessage(), 2000);
+      return;
+    }
 
     const quadrant = parseInt(e.target.dataset.quadrant);
     const direction = e.target.dataset.direction;
 
-    // Rotaciona o quadrante
-    this.rotateQuadrant(quadrant, direction);
-    this.updateDisplay();
+    // Enviar rotação ao servidor
+    this.socket.emit('rotate_quadrant', {
+      gameId: this.gameId,
+      quadrant,
+      direction
+    });
+  }
 
-    // Verifica vitória após rotação
-    if (this.checkWinCondition()) {
-      this.endGame(this.currentPlayer);
-      return;
+  /**
+   * Verifica se o jogador pode jogar
+   */
+  canPlay() {
+    if (!this.connected) {
+      this.showMessage('Você não está conectado ao servidor!', 'error');
+      return false;
     }
 
-    // Troca de jogador e volta para fase de colocação
-    this.switchPlayer();
-    this.gamePhase = 'place';
-    this.updateDisplay();
-  }
-
-  /**
-   * Coloca uma peça no tabuleiro
-   */
-  placePiece(quadrant, cell) {
-    this.board[quadrant][cell] = this.currentPlayer;
-  }
-
-  /**
-   * Rotaciona um quadrante
-   */
-  rotateQuadrant(quadrant, direction) {
-    const quad = this.board[quadrant];
-    const rotated = new Array(9);
-
-    if (direction === 'right') {
-      // Rotação horária (90° direita)
-      rotated[0] = quad[6];
-      rotated[1] = quad[3];
-      rotated[2] = quad[0];
-      rotated[3] = quad[7];
-      rotated[4] = quad[4];
-      rotated[5] = quad[1];
-      rotated[6] = quad[8];
-      rotated[7] = quad[5];
-      rotated[8] = quad[2];
-    } else {
-      // Rotação anti-horária (90° esquerda)
-      rotated[0] = quad[2];
-      rotated[1] = quad[5];
-      rotated[2] = quad[8];
-      rotated[3] = quad[1];
-      rotated[4] = quad[4];
-      rotated[5] = quad[7];
-      rotated[6] = quad[0];
-      rotated[7] = quad[3];
-      rotated[8] = quad[6];
+    if (!this.game) {
+      this.showMessage('Partida não iniciada!', 'error');
+      return false;
     }
 
-    this.board[quadrant] = rotated;
-
-    // Animação de rotação
-    const quadrantElement = document.getElementById(`quadrant-${quadrant}`);
-    quadrantElement.classList.add('rotate-animation');
-
-    setTimeout(() => {
-      quadrantElement.classList.remove('rotate-animation');
-    }, 500);
-  }
-
-  /**
-   * Verifica condição de vitória
-   */
-  checkWinCondition() {
-    const fullBoard = this.convertToFullBoard();
-
-    // Verifica vitória para ambos os jogadores
-    for (let player = 1; player <= 2; player++) {
-      if (this.checkPlayerWin(fullBoard, player)) {
-        this.winner = player;
-        return true;
+    if (this.game.status !== 'playing') {
+      if (this.game.status === 'waiting') {
+        this.showMessage('Aguardando outro jogador...', 'info');
+      } else {
+        this.showMessage('A partida já terminou!', 'warning');
       }
+      return false;
     }
 
-    // Verifica empate (tabuleiro cheio)
-    if (this.isBoardFull()) {
-      this.winner = 'draw';
-      return true;
+    if (this.game.currentTurn !== this.playerNumber) {
+      this.showMessage('Não é o seu turno!', 'warning');
+      setTimeout(() => this.hideMessage(), 2000);
+      return false;
     }
 
-    return false;
-  }
-
-  /**
-   * Converte board de quadrantes para tabuleiro 6x6 completo
-   */
-  convertToFullBoard() {
-    const fullBoard = Array(6).fill().map(() => Array(6).fill(0));
-
-    for (let q = 0; q < 4; q++) {
-      const startRow = Math.floor(q / 2) * 3;
-      const startCol = (q % 2) * 3;
-
-      for (let i = 0; i < 9; i++) {
-        const row = Math.floor(i / 3);
-        const col = i % 3;
-        fullBoard[startRow + row][startCol + col] = this.board[q][i];
-      }
-    }
-
-    return fullBoard;
-  }
-
-  /**
-   * Verifica se um jogador venceu
-   */
-  checkPlayerWin(board, player) {
-    const directions = [
-      [0, 1],   // horizontal
-      [1, 0],   // vertical
-      [1, 1],   // diagonal principal
-      [1, -1]   // diagonal secundária
-    ];
-
-    for (let row = 0; row < 6; row++) {
-      for (let col = 0; col < 6; col++) {
-        if (board[row][col] === player) {
-          for (let [dRow, dCol] of directions) {
-            if (this.checkDirection(board, row, col, dRow, dCol, player)) {
-              return true;
-            }
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Verifica 5 em linha em uma direção específica
-   */
-  checkDirection(board, startRow, startCol, dRow, dCol, player) {
-    let count = 0;
-    let row = startRow;
-    let col = startCol;
-
-    while (row >= 0 && row < 6 && col >= 0 && col < 6 && board[row][col] === player) {
-      count++;
-      if (count >= 5) return true;
-      row += dRow;
-      col += dCol;
-    }
-
-    return false;
-  }
-
-  /**
-   * Verifica se o tabuleiro está cheio
-   */
-  isBoardFull() {
-    for (let q = 0; q < 4; q++) {
-      for (let c = 0; c < 9; c++) {
-        if (this.board[q][c] === 0) return false;
-      }
-    }
     return true;
   }
 
   /**
-   * Troca o jogador atual
+   * Atualizar interface
    */
-  switchPlayer() {
-    this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
-  }
+  updateUI() {
+    if (!this.game) return;
 
-  /**
-   * Atualiza toda a interface
-   */
-  updateDisplay() {
     this.updateBoard();
-    this.updatePlayerDisplay();
-    this.updateGamePhase();
-    this.updateQuadrantHighlights();
-    this.updatePlayerStatus();
+    this.updatePlayers();
+    this.updateTurnInfo();
+    this.updateQuadrantButtons();
   }
 
   /**
-   * Atualiza o tabuleiro visual
+   * Atualizar tabuleiro
    */
   updateBoard() {
     for (let q = 0; q < 4; q++) {
       for (let c = 0; c < 9; c++) {
         const cell = document.querySelector(`[data-quadrant="${q}"][data-cell="${c}"]`);
-        const value = this.board[q][c];
+        const value = this.game.boardState[q][c];
 
         cell.className = 'cell';
         if (value !== 0) {
@@ -308,42 +348,75 @@ class PentagoGame {
   }
 
   /**
-   * Atualiza display do jogador atual
+   * Atualizar informações dos jogadores
    */
-  updatePlayerDisplay() {
-    const display = document.getElementById('currentPlayerDisplay');
-    display.textContent = this.players[this.currentPlayer].name;
-    display.className = `player-badge player-${this.currentPlayer}-badge`;
-  }
+  updatePlayers() {
+    const player1Data = this.game.player1.userId;
+    const player2Data = this.game.player2.userId;
 
-  /**
-   * Atualiza a fase do jogo
-   */
-  updateGamePhase() {
-    const phaseDisplay = document.getElementById('gamePhase');
-    if (this.gamePhase === 'place') {
-      phaseDisplay.textContent = 'Coloque uma peça';
-      phaseDisplay.className = 'phase-badge phase-place';
+    if (player1Data) {
+      document.getElementById('player1Name').textContent = player1Data.name || 'Jogador 1';
+      document.getElementById('player1Avatar').src = player1Data.avatar || '/assets/img/avatars/default.png';
+      document.getElementById('player1Status').classList.toggle('active', this.game.currentTurn === 1);
+    }
+
+    if (player2Data) {
+      document.getElementById('player2Name').textContent = player2Data.name || 'Jogador 2';
+      document.getElementById('player2Avatar').src = player2Data.avatar || '/assets/img/avatars/default.png';
+      document.getElementById('player2Status').classList.toggle('active', this.game.currentTurn === 2);
     } else {
-      phaseDisplay.textContent = 'Gire um quadrante';
-      phaseDisplay.className = 'phase-badge phase-rotate';
+      document.getElementById('player2Name').textContent = 'Aguardando...';
     }
   }
 
   /**
-   * Atualiza highlights dos quadrantes
+   * Atualizar informações do turno
    */
-  updateQuadrantHighlights() {
-    document.querySelectorAll('.quadrant').forEach((quad) => {
-      quad.classList.remove('rotation-phase');
+  updateTurnInfo() {
+    const currentPlayerDisplay = document.getElementById('currentPlayerDisplay');
+    const gamePhaseDisplay = document.getElementById('gamePhase');
 
+    // Mostrar de quem é o turno
+    if (this.game.currentTurn === 1 && this.game.player1.userId) {
+      currentPlayerDisplay.textContent = this.game.player1.userId.name || 'Jogador 1';
+      currentPlayerDisplay.className = 'player-badge player-1-badge';
+    } else if (this.game.currentTurn === 2 && this.game.player2.userId) {
+      currentPlayerDisplay.textContent = this.game.player2.userId.name || 'Jogador 2';
+      currentPlayerDisplay.className = 'player-badge player-2-badge';
+    }
+
+    // Mostrar fase do jogo
+    if (this.game.gamePhase === 'place') {
+      gamePhaseDisplay.textContent = 'Coloque uma peça';
+      gamePhaseDisplay.className = 'phase-badge phase-place';
+    } else {
+      gamePhaseDisplay.textContent = 'Gire um quadrante';
+      gamePhaseDisplay.className = 'phase-badge phase-rotate';
+    }
+
+    // Adicionar indicação se é seu turno
+    if (this.game.currentTurn === this.playerNumber) {
+      gamePhaseDisplay.textContent += ' (Seu turno!)';
+    }
+  }
+
+  /**
+   * Atualizar botões de rotação
+   */
+  updateQuadrantButtons() {
+    const canRotate = this.game.gamePhase === 'rotate' &&
+                      this.game.currentTurn === this.playerNumber &&
+                      this.game.status === 'playing';
+
+    document.querySelectorAll('.quadrant').forEach(quad => {
+      quad.classList.remove('rotation-phase');
       const rotateButtons = quad.querySelectorAll('.rotate-btn');
       rotateButtons.forEach(btn => {
-        btn.disabled = this.gamePhase !== 'rotate' || this.gameOver;
+        btn.disabled = !canRotate;
       });
     });
 
-    if (this.gamePhase === 'rotate') {
+    if (canRotate) {
       document.querySelectorAll('.quadrant').forEach(quad => {
         quad.classList.add('rotation-phase');
       });
@@ -351,53 +424,50 @@ class PentagoGame {
   }
 
   /**
-   * Atualiza status dos jogadores (indica quem está jogando)
+   * Handler: Fim de jogo
    */
-  updatePlayerStatus() {
-    const player1Status = document.getElementById('player1Status');
-    const player2Status = document.getElementById('player2Status');
+  handleGameOver(data) {
+    this.updateUI();
 
-    // Remove classes ativas
-    player1Status.classList.remove('active');
-    player2Status.classList.remove('active');
+    let message = '';
+    let type = 'info';
 
-    // Adiciona classe ativa ao jogador atual
-    if (this.currentPlayer === 1) {
-      player1Status.classList.add('active');
-    } else {
-      player2Status.classList.add('active');
-    }
-  }
-
-  /**
-   * Finaliza o jogo
-   */
-  endGame(winner) {
-    this.gameOver = true;
-    this.winner = winner;
-
-    if (winner === 'draw') {
-      this.showMessage('O jogo terminou empatado!', 'draw');
-    } else {
-      const winnerName = this.players[winner].name;
-      this.showMessage(`🎉 ${winnerName.toUpperCase()} VENCEU! 🎉`, 'winner');
-
-      // Atualiza pontuação do vencedor
-      this.players[winner].score++;
-      this.updatePlayerUI(winner, this.players[winner]);
+    if (data.draw) {
+      message = '🤝 Empate! O tabuleiro ficou cheio.';
+      type = 'draw';
+    } else if (data.winner) {
+      const isWinner = data.winner === this.playerNumber;
+      if (isWinner) {
+        message = '🎉 VOCÊ VENCEU! Parabéns! 🎉';
+        type = 'winner';
+      } else {
+        const opponentName = data.winner === 1
+          ? this.game.player1.userId.name
+          : this.game.player2.userId.name;
+        message = `😢 ${opponentName} venceu! Mais sorte na próxima.`;
+        type = 'info';
+      }
     }
 
-    // Desabilita todos os botões de rotação
+    this.showMessage(message, type);
+
+    // Desabilitar todos os botões
     document.querySelectorAll('.rotate-btn').forEach(btn => {
       btn.disabled = true;
     });
-
-    // TODO: Enviar resultado para o servidor
-    // this.sendGameResult();
   }
 
   /**
-   * Exibe mensagem na tela
+   * Sair da partida
+   */
+  leaveGame() {
+    if (this.socket && this.connected) {
+      this.socket.emit('leave_game');
+    }
+  }
+
+  /**
+   * Exibir mensagem
    */
   showMessage(text, type = 'info') {
     const messageEl = document.getElementById('gameMessage');
@@ -407,52 +477,24 @@ class PentagoGame {
   }
 
   /**
-   * Esconde a mensagem
+   * Esconder mensagem
    */
   hideMessage() {
     document.getElementById('gameMessage').classList.add('hidden');
   }
-
-  /**
-   * Reinicia o jogo
-   */
-  resetGame() {
-    this.board = Array(4).fill().map(() => Array(9).fill(0));
-    this.currentPlayer = 1;
-    this.gamePhase = 'place';
-    this.gameOver = false;
-    this.winner = null;
-
-    this.hideMessage();
-    this.updateDisplay();
-  }
-
-  /**
-   * Envia resultado do jogo para o servidor
-   * TODO: Implementar quando WebSocket estiver pronto
-   */
-  async sendGameResult() {
-    // const result = {
-    //   winner: this.winner,
-    //   players: [
-    //     { id: this.players[1].id, score: this.players[1].score },
-    //     { id: this.players[2].id, score: this.players[2].score }
-    //   ],
-    //   finalBoard: this.board
-    // };
-
-    // await fetch('/api/games/result', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(result)
-    // });
-  }
 }
 
-// Inicializa o jogo quando a página carregar
+// Inicializar quando a página carregar
 document.addEventListener('DOMContentLoaded', () => {
-  const game = new PentagoGame();
+  const game = new PentagoGameClient();
 
-  // Torna o jogo acessível globalmente para debugging
+  // Torna acessível globalmente para debugging
   window.pentagoGame = game;
+
+  // Desconectar ao sair da página
+  window.addEventListener('beforeunload', () => {
+    if (game.socket && game.connected) {
+      game.leaveGame();
+    }
+  });
 });

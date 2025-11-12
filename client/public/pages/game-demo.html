@@ -4,91 +4,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jogo - Pentago Web</title>
+  <title>Pentago Demo - Jogue contra o Bot</title>
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/game.css">
 </head>
 
 <body>
-  <div class="game-layout">
-    <!-- Sidebar esquerda - Informações e Chat -->
-    <aside class="sidebar sidebar-left">
-      <!-- Informações dos jogadores -->
-      <div class="card players-card">
-        <div class="card-header">
-          <h3 class="card-title">Jogadores</h3>
-        </div>
-        <div class="card-body">
-          <div class="player-info player-1-info">
-            <div class="player-avatar">
-              <img id="player1Avatar" src="/assets/img/avatars/default.png" alt="Jogador 1">
-            </div>
-            <div class="player-details">
-              <h4 id="player1Name">Jogador 1</h4>
-              <div class="player-stats">
-                <span class="player-score">Pontos: <strong id="player1Score">0</strong></span>
-              </div>
-            </div>
-            <div class="player-status" id="player1Status">
-              <span class="status-indicator"></span>
-            </div>
-          </div>
-
-          <div class="vs-divider">VS</div>
-
-          <div class="player-info player-2-info">
-            <div class="player-avatar">
-              <img id="player2Avatar" src="/assets/img/avatars/default.png" alt="Jogador 2">
-            </div>
-            <div class="player-details">
-              <h4 id="player2Name">Jogador 2</h4>
-              <div class="player-stats">
-                <span class="player-score">Pontos: <strong id="player2Score">0</strong></span>
-              </div>
-            </div>
-            <div class="player-status" id="player2Status">
-              <span class="status-indicator"></span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Chat (preparado para futuro) -->
-      <div class="card chat-card" style="display: none;">
-        <div class="card-header">
-          <h3 class="card-title">Chat</h3>
-        </div>
-        <div class="card-body">
-          <div class="chat-messages" id="chatMessages">
-            <!-- Mensagens do chat aparecerão aqui -->
-          </div>
-          <div class="chat-input-container">
-            <input type="text" id="chatInput" placeholder="Digite sua mensagem..." disabled>
-            <button id="chatSend" class="btn btn-primary" disabled>Enviar</button>
-          </div>
-        </div>
-      </div>
-    </aside>
-
+  <div class="game-layout game-demo-layout">
     <!-- Área central - Tabuleiro do jogo -->
-    <main class="game-main">
-      <header class="game-header">
-        <div class="game-title">
+    <main class="game-main game-demo-main">
+      <!-- Header minimalista -->
+      <header class="game-header game-demo-header">
+        <div class="demo-top-bar">
           <h1>🎮 Pentago</h1>
-          <a href="/pages/index.html" class="btn-back">← Sair</a>
-        </div>
-
-        <!-- Informações do turno atual -->
-        <div class="game-info-bar">
-          <div class="current-turn">
-            <span>Turno de: </span>
-            <span id="currentPlayerDisplay" class="player-badge player-1-badge">Jogador 1</span>
-          </div>
-          <div class="game-phase-info">
-            <span id="gamePhase" class="phase-badge">Coloque uma peça</span>
-          </div>
+          <a href="/pages/index.html" class="btn btn-back-demo">← Voltar</a>
         </div>
       </header>
+
+      <!-- Informações do turno (acima do tabuleiro, mas compacto) -->
+      <div class="game-info-compact">
+        <span id="currentPlayerDisplay" class="player-badge player-1-badge">Seu turno</span>
+        <span id="gamePhase" class="phase-badge">Coloque uma peça</span>
+      </div>
 
       <!-- Mensagem de status do jogo -->
       <div id="gameMessage" class="game-message hidden"></div>
@@ -168,45 +105,36 @@
         </div>
       </div>
 
-      <!-- Controles do jogo -->
-      <div class="game-controls">
-        <button id="resetBtn" class="btn btn-success">🔄 Novo Jogo</button>
+      <!-- Controles e configurações (abaixo do tabuleiro) -->
+      <div class="game-bottom-section">
+        <!-- Seletor de dificuldade -->
+        <div class="difficulty-selector-bottom">
+          <label for="difficulty">🤖 Dificuldade:</label>
+          <select id="difficulty" class="difficulty-select">
+            <option value="easy" selected>Fácil</option>
+            <option value="medium" disabled>Médio (em breve)</option>
+            <option value="hard" disabled>Difícil (em breve)</option>
+          </select>
+        </div>
+
+        <!-- Controles do jogo -->
+        <div class="game-controls">
+          <button id="resetBtn" class="btn btn-success">🔄 Novo Jogo</button>
+          <a href="/pages/login.html" class="btn btn-primary">👤 Jogar Online</a>
+        </div>
+
+        <!-- Info extra -->
+        <div class="game-info-extra">
+          <p>💡 <strong>Você:</strong> Jogador 1 (Vermelho) • <strong>Bot:</strong> Jogador 2 (Azul)</p>
+          <p>🎯 <strong>Objetivo:</strong> Forme 5 peças em linha para vencer!</p>
+        </div>
       </div>
     </main>
-
-    <!-- Sidebar direita - Fila de jogadores (preparado para futuro) -->
-    <aside class="sidebar sidebar-right" style="display: none;">
-      <div class="card queue-card">
-        <div class="card-header">
-          <h3 class="card-title">Fila de Jogadores</h3>
-          <span class="queue-count" id="queueCount">0/25</span>
-        </div>
-        <div class="card-body">
-          <div class="queue-list" id="queueList">
-            <!-- Lista de jogadores na fila -->
-            <p class="queue-empty">Nenhum jogador na fila</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Placar geral (preparado para futuro) -->
-      <div class="card leaderboard-card">
-        <div class="card-header">
-          <h3 class="card-title">Placar Geral</h3>
-        </div>
-        <div class="card-body">
-          <div id="leaderboardList">
-            <!-- Top jogadores -->
-          </div>
-        </div>
-      </div>
-    </aside>
   </div>
 
   <!-- Scripts -->
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/utils/api.js"></script>
-  <script src="/js/pages/game.js"></script>
+  <script src="/js/utils/pentagoBot.js"></script>
+  <script src="/js/pages/game-demo.js"></script>
 </body>
 
 </html>

@@ -16,6 +16,63 @@
   background: var(--gradient-bg, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
 }
 
+/* Layout simplificado para modo demo */
+.game-demo-layout {
+  grid-template-columns: 1fr;
+  max-width: 800px;
+  margin: 0 auto;
+  height: auto;
+  min-height: 100vh;
+  padding: 1rem;
+  background: #f0f4f8;
+}
+
+.game-demo-main {
+  max-width: 100%;
+  height: auto;
+}
+
+.game-demo-header {
+  margin-bottom: 0.25rem;
+}
+
+/* Barra superior do demo */
+.demo-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+.demo-top-bar h1 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-primary, #2d3748);
+}
+
+.btn-back-demo {
+  padding: 0.3rem 0.75rem;
+  background: var(--bg-secondary, #f7fafc);
+  color: var(--text-primary, #2d3748);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-back-demo:hover {
+  background: white;
+  border-color: var(--primary-color, #667eea);
+  color: var(--primary-color, #667eea);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
 .game-main {
   display: flex;
   flex-direction: column;
@@ -88,43 +145,43 @@
    ============================================ */
 
 .player-badge {
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
   font-weight: bold;
-  font-size: 1rem;
+  font-size: 0.8rem;
   display: inline-block;
 }
 
 .player-1-badge {
   background: #fed7d7;
   color: #c53030;
-  border: 2px solid #c53030;
+  border: 1px solid #c53030;
 }
 
 .player-2-badge {
   background: #bee3f8;
   color: #2c5282;
-  border: 2px solid #2c5282;
+  border: 1px solid #2c5282;
 }
 
 .phase-badge {
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   display: inline-block;
 }
 
 .phase-place {
   background: #c6f6d5;
   color: #22543d;
-  border: 2px solid #38a169;
+  border: 1px solid #38a169;
 }
 
 .phase-rotate {
   background: #feebc8;
   color: #7c2d12;
-  border: 2px solid #ed8936;
+  border: 1px solid #ed8936;
 }
 
 /* ============================================
@@ -144,6 +201,14 @@
   background: var(--card-bg, white);
   border-radius: var(--border-radius, 12px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Ajustes para o modo demo */
+.game-demo-layout .game-board {
+  max-width: 500px;
+  gap: 1rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
 }
 
 /* ============================================
@@ -255,6 +320,12 @@
   min-height: 140px;
 }
 
+/* Grid menor no modo demo */
+.game-demo-layout .grid {
+  gap: 6px;
+  min-height: 110px;
+}
+
 /* ============================================
    Células do Tabuleiro
    ============================================ */
@@ -345,17 +416,17 @@
 
 .game-message {
   text-align: center;
-  padding: 1.5rem 2rem;
-  border-radius: 15px;
-  font-size: 1.8rem;
-  font-weight: bold;
-  margin: 0 auto;
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 auto 0.5rem;
   transition: all 0.5s ease;
   transform: scale(0.8);
   opacity: 0;
   animation: message-appear 0.8s ease forwards;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-  letter-spacing: 1px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
+  letter-spacing: 0.3px;
   max-width: 90%;
 }
 
@@ -378,6 +449,27 @@
     0 10px 30px rgba(237, 137, 54, 0.4),
     0 0 50px rgba(237, 137, 54, 0.3),
     inset 0 2px 10px rgba(255, 255, 255, 0.3);
+}
+
+.game-message.warning {
+  background: linear-gradient(135deg, #f6ad55, #ed8936);
+  color: white;
+  border: 3px solid #c05621;
+  box-shadow: 0 10px 30px rgba(246, 173, 85, 0.4);
+}
+
+.game-message.error {
+  background: linear-gradient(135deg, #fc8181, #f56565);
+  color: white;
+  border: 3px solid #c53030;
+  box-shadow: 0 10px 30px rgba(252, 129, 129, 0.4);
+}
+
+.game-message.success {
+  background: linear-gradient(135deg, #68d391, #48bb78);
+  color: white;
+  border: 3px solid #2f855a;
+  box-shadow: 0 10px 30px rgba(104, 211, 145, 0.4);
 }
 
 @keyframes message-appear {
@@ -584,7 +676,7 @@
    ============================================ */
 
 @media (max-width: 1200px) {
-  .game-layout {
+  .game-layout:not(.game-demo-layout) {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr auto;
   }
@@ -599,18 +691,59 @@
   }
 }
 
+/* Responsividade específica do modo demo */
+@media (max-width: 900px) {
+  .game-demo-layout {
+    max-width: 100%;
+    padding: 0.75rem;
+  }
+
+  .game-demo-layout .game-board {
+    max-width: 450px;
+  }
+
+  .demo-top-bar h1 {
+    font-size: 1.5rem;
+  }
+
+  .difficulty-selector {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .difficulty-info {
+    width: 100%;
+    text-align: center;
+    margin-left: 0;
+  }
+}
+
 @media (max-width: 768px) {
-  .game-layout {
+  .game-layout:not(.game-demo-layout) {
     padding: 0.5rem;
     gap: 1rem;
+  }
+
+  .game-demo-layout {
+    padding: 0.5rem;
+  }
+
+  .game-demo-layout .game-board {
+    max-width: 100%;
   }
 
   .game-header {
     padding: 1rem;
   }
 
-  .game-title h1 {
-    font-size: 1.5rem;
+  .game-title h1,
+  .demo-top-bar h1 {
+    font-size: 1.3rem;
+  }
+
+  .btn-back-demo {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
   }
 
   .game-info-bar {
@@ -621,9 +754,14 @@
   }
 
   .game-board {
-    gap: 1rem;
+    gap: 0.75rem;
     max-width: 100%;
-    padding: 1rem;
+    padding: 0.75rem;
+  }
+
+  .game-demo-layout .grid {
+    min-height: 90px;
+    gap: 4px;
   }
 
   .quadrant {
@@ -656,21 +794,54 @@
     font-size: 0.9rem;
     padding: 0.4rem 0.8rem;
   }
-}
 
-@media (max-width: 480px) {
-  .game-title h1 {
-    font-size: 1.3rem;
-  }
-
-  .game-board {
-    gap: 0.75rem;
+  .difficulty-selector {
     padding: 0.75rem;
   }
 
+  .difficulty-selector label {
+    font-size: 0.9rem;
+  }
+
+  .difficulty-select {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-title h1,
+  .demo-top-bar h1 {
+    font-size: 1.1rem;
+  }
+
+  .btn-back-demo {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.85rem;
+  }
+
+  .game-demo-layout {
+    padding: 0.25rem;
+  }
+
+  .game-board {
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .game-demo-layout .game-board {
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
   .grid {
-    gap: 4px;
+    gap: 3px;
     min-height: 80px;
+  }
+
+  .game-demo-layout .grid {
+    gap: 3px;
+    min-height: 75px;
   }
 
   .cell {
@@ -678,7 +849,187 @@
   }
 
   .game-message {
-    font-size: 1.1rem;
+    font-size: 1rem;
     padding: 0.75rem 1rem;
+  }
+
+  .difficulty-selector {
+    flex-direction: column;
+    padding: 0.5rem;
+  }
+
+  .difficulty-info {
+    font-size: 0.85rem;
+  }
+
+  .game-controls {
+    padding: 0.75rem;
+  }
+
+  .game-controls .btn {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+  }
+}
+
+/* ============================================
+   Seletor de Dificuldade (Demo)
+   ============================================ */
+
+.difficulty-selector {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-secondary, #f7fafc);
+  border-radius: 8px;
+  border: 2px solid var(--border-color, #e2e8f0);
+  margin-bottom: 1rem;
+}
+
+.difficulty-selector label {
+  font-weight: 600;
+  color: var(--text-primary, #2d3748);
+}
+
+.difficulty-select {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 2px solid var(--primary-color, #667eea);
+  background: white;
+  color: var(--text-primary, #2d3748);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.difficulty-select:hover:not(:disabled) {
+  border-color: #5a67d8;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.difficulty-select option:disabled {
+  color: #a0aec0;
+}
+
+.difficulty-info {
+  margin-left: auto;
+  font-size: 0.9rem;
+  color: var(--text-secondary, #718096);
+  font-style: italic;
+}
+
+/* ============================================
+   Layout Otimizado para Tabuleiro em Destaque
+   ============================================ */
+
+/* Info compacta acima do tabuleiro */
+.game-info-compact {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.3rem 0.75rem;
+  margin-bottom: 0.5rem;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Seção inferior com configurações */
+.game-bottom-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* Seletor de dificuldade na parte inferior */
+.difficulty-selector-bottom {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.difficulty-selector-bottom label {
+  font-weight: 600;
+  color: var(--text-primary, #2d3748);
+  font-size: 0.95rem;
+}
+
+/* Info extra no rodapé */
+.game-info-extra {
+  text-align: center;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.game-info-extra p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary, #718096);
+  line-height: 1.5;
+}
+
+.game-info-extra strong {
+  color: var(--text-primary, #2d3748);
+}
+
+/* Header mais compacto */
+.game-demo-header {
+  margin-bottom: 0.5rem;
+  padding: 0;
+}
+
+.demo-top-bar {
+  padding: 0.75rem 0;
+  margin-bottom: 0.5rem;
+}
+
+.demo-top-bar h1 {
+  font-size: 1.5rem;
+}
+
+/* Ajustar controles */
+.game-demo-layout .game-controls {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Responsividade para info compacta */
+@media (max-width: 600px) {
+  .game-info-compact {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .difficulty-selector-bottom {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .game-info-extra p {
+    font-size: 0.85rem;
+  }
+
+  .game-controls {
+    flex-direction: column;
+  }
+
+  .game-controls .btn {
+    width: 100%;
   }
 }
