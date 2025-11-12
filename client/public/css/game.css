@@ -1,0 +1,684 @@
+/**
+ * Pentago Game Styles
+ * Estilos específicos para a página do jogo
+ */
+
+/* ============================================
+   Layout Principal do Jogo
+   ============================================ */
+
+.game-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr 280px;
+  gap: 1.5rem;
+  height: 100vh;
+  padding: 1rem;
+  background: var(--gradient-bg, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+}
+
+.game-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ============================================
+   Sidebars
+   ============================================ */
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  overflow-y: auto;
+}
+
+.sidebar-left,
+.sidebar-right {
+  max-height: calc(100vh - 2rem);
+}
+
+/* ============================================
+   Header do Jogo
+   ============================================ */
+
+.game-header {
+  background: var(--card-bg, white);
+  border-radius: var(--border-radius, 12px);
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.game-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.game-title h1 {
+  font-size: 2rem;
+  margin: 0;
+  color: var(--text-primary, #2d3748);
+}
+
+.game-info-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--bg-secondary, #f7fafc);
+  border-radius: 8px;
+  border: 2px solid var(--border-color, #e2e8f0);
+}
+
+.current-turn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* ============================================
+   Badges
+   ============================================ */
+
+.player-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 1rem;
+  display: inline-block;
+}
+
+.player-1-badge {
+  background: #fed7d7;
+  color: #c53030;
+  border: 2px solid #c53030;
+}
+
+.player-2-badge {
+  background: #bee3f8;
+  color: #2c5282;
+  border: 2px solid #2c5282;
+}
+
+.phase-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  display: inline-block;
+}
+
+.phase-place {
+  background: #c6f6d5;
+  color: #22543d;
+  border: 2px solid #38a169;
+}
+
+.phase-rotate {
+  background: #feebc8;
+  color: #7c2d12;
+  border: 2px solid #ed8936;
+}
+
+/* ============================================
+   Tabuleiro do Jogo
+   ============================================ */
+
+.game-board {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 1.5rem;
+  margin: 0 auto;
+  aspect-ratio: 1;
+  max-width: 600px;
+  width: 100%;
+  padding: 1.5rem;
+  background: var(--card-bg, white);
+  border-radius: var(--border-radius, 12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================
+   Quadrantes
+   ============================================ */
+
+.quadrant {
+  position: relative;
+  background: #f7fafc;
+  border: 3px solid #cbd5e0;
+  border-radius: 12px;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.quadrant:hover {
+  border-color: #667eea;
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+}
+
+.quadrant.rotation-phase {
+  border-color: #ed8936;
+  box-shadow: 0 0 25px rgba(237, 137, 54, 0.4);
+  animation: pulse-rotation 1.5s infinite;
+}
+
+@keyframes pulse-rotation {
+  0%, 100% {
+    box-shadow: 0 0 25px rgba(237, 137, 54, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(237, 137, 54, 0.6);
+  }
+}
+
+/* ============================================
+   Botões de Rotação
+   ============================================ */
+
+.rotate-buttons {
+  position: absolute;
+  top: -18px;
+  right: -18px;
+  display: flex;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 10;
+}
+
+.quadrant:hover .rotate-buttons,
+.quadrant.rotation-phase .rotate-buttons {
+  opacity: 1;
+}
+
+.rotate-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #667eea;
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  font-weight: bold;
+}
+
+.rotate-btn:hover:not(:disabled) {
+  background: #5a67d8;
+  transform: scale(1.15);
+  box-shadow: 0 4px 15px rgba(90, 103, 216, 0.5);
+}
+
+.rotate-btn:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.5;
+}
+
+.rotate-animation {
+  animation: rotate-quadrant 0.5s ease;
+}
+
+@keyframes rotate-quadrant {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(90deg);
+  }
+}
+
+/* ============================================
+   Grid de Células
+   ============================================ */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 8px;
+  height: 100%;
+  min-height: 140px;
+}
+
+/* ============================================
+   Células do Tabuleiro
+   ============================================ */
+
+.cell {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  position: relative;
+  aspect-ratio: 1;
+}
+
+.cell:hover:not(.occupied) {
+  border-color: #667eea;
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  background: #edf2f7;
+}
+
+.cell.occupied {
+  cursor: not-allowed;
+}
+
+.cell.occupied:hover {
+  transform: none;
+}
+
+/* Peças dos jogadores */
+.cell::before {
+  content: '';
+  width: 70%;
+  height: 70%;
+  border-radius: 50%;
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: scale(0);
+}
+
+.cell.occupied::before {
+  opacity: 1;
+  transform: scale(1);
+  animation: piece-appear 0.3s ease;
+}
+
+@keyframes piece-appear {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.cell.player-1 {
+  background: #fed7d7;
+  border-color: #c53030;
+}
+
+.cell.player-1::before {
+  background: #c53030;
+  box-shadow: 0 2px 8px rgba(197, 48, 48, 0.4);
+}
+
+.cell.player-2 {
+  background: #bee3f8;
+  border-color: #2c5282;
+}
+
+.cell.player-2::before {
+  background: #2c5282;
+  box-shadow: 0 2px 8px rgba(44, 82, 130, 0.4);
+}
+
+/* ============================================
+   Mensagem do Jogo
+   ============================================ */
+
+.game-message {
+  text-align: center;
+  padding: 1.5rem 2rem;
+  border-radius: 15px;
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin: 0 auto;
+  transition: all 0.5s ease;
+  transform: scale(0.8);
+  opacity: 0;
+  animation: message-appear 0.8s ease forwards;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  letter-spacing: 1px;
+  max-width: 90%;
+}
+
+.game-message.winner {
+  background: linear-gradient(135deg, #48bb78, #38a169);
+  color: white;
+  border: 3px solid #22543d;
+  box-shadow:
+    0 10px 30px rgba(72, 187, 120, 0.4),
+    0 0 50px rgba(72, 187, 120, 0.3),
+    inset 0 2px 10px rgba(255, 255, 255, 0.3);
+  animation: winner-pulse 1.5s ease-in-out infinite, message-appear 0.8s ease forwards;
+}
+
+.game-message.draw {
+  background: linear-gradient(135deg, #ed8936, #dd6b20);
+  color: white;
+  border: 3px solid #744210;
+  box-shadow:
+    0 10px 30px rgba(237, 137, 54, 0.4),
+    0 0 50px rgba(237, 137, 54, 0.3),
+    inset 0 2px 10px rgba(255, 255, 255, 0.3);
+}
+
+@keyframes message-appear {
+  from {
+    transform: scale(0.5) translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes winner-pulse {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(1.05) translateY(-5px);
+  }
+}
+
+/* ============================================
+   Controles do Jogo
+   ============================================ */
+
+.game-controls {
+  text-align: center;
+  padding: 1rem;
+  background: var(--card-bg, white);
+  border-radius: var(--border-radius, 12px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   Informações dos Jogadores
+   ============================================ */
+
+.players-card .card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-secondary, #f7fafc);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.player-1-info {
+  border-color: #fed7d7;
+}
+
+.player-2-info {
+  border-color: #bee3f8;
+}
+
+.player-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 3px solid var(--border-color, #e2e8f0);
+}
+
+.player-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.player-details {
+  flex: 1;
+}
+
+.player-details h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  color: var(--text-primary, #2d3748);
+}
+
+.player-stats {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #718096);
+}
+
+.player-status {
+  width: 12px;
+  height: 12px;
+  position: relative;
+}
+
+.player-status .status-indicator {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #cbd5e0;
+  display: block;
+  transition: all 0.3s ease;
+}
+
+.player-status.active .status-indicator {
+  background: #48bb78;
+  box-shadow: 0 0 10px rgba(72, 187, 120, 0.6);
+  animation: status-pulse 2s infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.8;
+  }
+}
+
+.vs-divider {
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: var(--text-secondary, #718096);
+  padding: 0.5rem 0;
+}
+
+/* ============================================
+   Chat (preparado para futuro)
+   ============================================ */
+
+.chat-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 400px;
+}
+
+.chat-card .card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+  background: var(--bg-secondary, #f7fafc);
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  max-height: 300px;
+}
+
+.chat-input-container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-input-container input {
+  flex: 1;
+}
+
+/* ============================================
+   Fila de Jogadores (preparado para futuro)
+   ============================================ */
+
+.queue-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.queue-count {
+  background: var(--primary-color, #667eea);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.queue-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.queue-empty {
+  text-align: center;
+  color: var(--text-secondary, #718096);
+  padding: 2rem 1rem;
+  font-style: italic;
+}
+
+/* ============================================
+   Responsividade
+   ============================================ */
+
+@media (max-width: 1200px) {
+  .game-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  .sidebar-left,
+  .sidebar-right {
+    display: none;
+  }
+
+  .game-main {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .game-layout {
+    padding: 0.5rem;
+    gap: 1rem;
+  }
+
+  .game-header {
+    padding: 1rem;
+  }
+
+  .game-title h1 {
+    font-size: 1.5rem;
+  }
+
+  .game-info-bar {
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+    padding: 0.75rem;
+  }
+
+  .game-board {
+    gap: 1rem;
+    max-width: 100%;
+    padding: 1rem;
+  }
+
+  .quadrant {
+    padding: 0.5rem;
+  }
+
+  .grid {
+    min-height: 100px;
+    gap: 5px;
+  }
+
+  .rotate-buttons {
+    top: -15px;
+    right: -15px;
+  }
+
+  .rotate-btn {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .game-message {
+    font-size: 1.3rem;
+    padding: 1rem 1.5rem;
+  }
+
+  .player-badge,
+  .phase-badge {
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-title h1 {
+    font-size: 1.3rem;
+  }
+
+  .game-board {
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .grid {
+    gap: 4px;
+    min-height: 80px;
+  }
+
+  .cell {
+    border-radius: 6px;
+  }
+
+  .game-message {
+    font-size: 1.1rem;
+    padding: 0.75rem 1rem;
+  }
+}
