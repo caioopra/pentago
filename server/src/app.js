@@ -5,6 +5,7 @@ const socketIo = require('socket.io');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const mongoSanitize = require('express-mongo-sanitize');
 const path = require('path');
 const connectDB = require('./config/database');
 const GameSocketService = require('./services/gameSocketService');
@@ -46,10 +47,19 @@ app.use(helmet({
   },
 }));
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());
+
+// Sanitizacao contra NoSQL injection
+// Remove caracteres como $ e . de req.body, req.query e req.params
+app.use(mongoSanitize({
+  replaceWith: '_',
+  onSanitize: ({ req, key }) => {
+    console.warn(`🛡️ NoSQL injection attempt blocked in ${key}`);
+  }
+}));
 
 // Inicializar Socket.io para o jogo
 const gameSocketService = new GameSocketService(io);
