@@ -4,8 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pentago Web - Início</title>
+  <title>Pentago Web - Inicio</title>
   <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/index.css">
 </head>
 
 <body>
@@ -16,15 +17,37 @@
     </header>
 
     <main>
-      <div class="welcome-section">
-        <h2>Bem-vindo ao Pentago!</h2>
-        <p>Um jogo de estratégia para dois jogadores onde você precisa formar cinco peças em linha.</p>
+      <!-- User Info Card (shown when logged in) -->
+      <div class="user-info-card" id="userInfoCard">
+        <img id="userAvatar" src="/assets/img/avatars/default.png" alt="Avatar" class="user-avatar">
+        <div class="user-name">
+          <span id="userName">Usuario</span>
+          <span class="user-role-badge" id="userRoleBadge" style="display: none;">Admin</span>
+        </div>
+        <div class="user-email" id="userEmail">email@example.com</div>
+        <div class="user-score"><span id="userScore">0</span> pontos</div>
       </div>
 
-      <div class="actions">
+      <div class="welcome-section">
+        <h2 id="welcomeTitle">Bem-vindo ao Pentago!</h2>
+        <p>Um jogo de estrategia para dois jogadores onde voce precisa formar cinco pecas em linha.</p>
+      </div>
+
+      <div class="actions" id="guestActions">
         <a href="/pages/login.html" class="btn btn-primary">Entrar</a>
         <a href="/pages/register.html" class="btn btn-secondary">Cadastrar</a>
-        <a href="/pages/game-demo.html" class="btn btn-success">🎮 Jogar Demo (vs Bot)</a>
+        <a href="/pages/game-demo.html" class="btn btn-success">Jogar Demo (vs Bot)</a>
+      </div>
+
+      <div class="actions" id="userActions" style="display: none;">
+        <a href="/pages/game.html" class="btn btn-primary">Jogar Online</a>
+        <a href="/pages/profile.html" class="btn btn-secondary">Meu Perfil</a>
+        <a href="/pages/game-demo.html" class="btn btn-success">Jogar Demo (vs Bot)</a>
+        <a href="#" id="logoutBtn" class="btn btn-danger">Sair</a>
+      </div>
+
+      <div class="actions" id="adminActions" style="display: none;">
+        <a href="/pages/admin.html" class="btn btn-warning">Painel Admin</a>
       </div>
 
       <div class="info-section">
@@ -38,11 +61,80 @@
     </main>
 
     <footer>
-      <p>Desenvolvido por Caio Prá Silva e Pedro Nack Martins - UFSC 2025</p>
+      <p>Desenvolvido por Caio Pra Silva e Pedro Nack Martins - UFSC 2025</p>
     </footer>
   </div>
 
+  <!-- Logout Overlay -->
+  <div class="logout-overlay" id="logoutOverlay">
+    <div class="logout-message">
+      <div class="logout-spinner"></div>
+      <h3>Saindo...</h3>
+      <p>Ate logo!</p>
+    </div>
+  </div>
+
+  <script src="/js/utils/api.js"></script>
   <script src="/js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const token = AuthManager.getToken();
+
+      if (token) {
+        try {
+          const response = await AuthAPI.getMe();
+          if (response.success) {
+            const user = response.data;
+
+            // Mostrar card de informacoes do usuario
+            document.getElementById('userInfoCard').classList.add('visible');
+            document.getElementById('userAvatar').src = user.avatar;
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('userEmail').textContent = user.email;
+            document.getElementById('userScore').textContent = user.score;
+
+            // Atualizar titulo de boas-vindas
+            document.getElementById('welcomeTitle').innerHTML =
+              `Ola, <span class="user-greeting">${user.name}</span>!`;
+
+            // Mostrar badge de admin se for admin
+            if (user.role === 'admin') {
+              document.getElementById('userRoleBadge').style.display = 'inline-block';
+              document.getElementById('adminActions').style.display = 'flex';
+            }
+
+            // Mostrar acoes de usuario logado
+            document.getElementById('guestActions').style.display = 'none';
+            document.getElementById('userActions').style.display = 'flex';
+
+            // Configurar logout com feedback visual
+            document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+              e.preventDefault();
+
+              // Mostrar overlay de logout
+              document.getElementById('logoutOverlay').classList.add('active');
+
+              try {
+                await AuthAPI.logout();
+              } catch (error) {
+                console.error('Erro ao fazer logout:', error);
+                // Limpar autenticacao mesmo se houver erro
+                AuthManager.logout();
+              }
+
+              // Aguardar um momento para mostrar a animacao
+              setTimeout(() => {
+                window.location.reload();
+              }, 1500);
+            });
+          }
+        } catch (error) {
+          // Token invalido, limpar
+          AuthManager.logout();
+        }
+      }
+    });
+  </script>
 </body>
 
 </html>

@@ -53,6 +53,15 @@
   background-color: #c82333;
 }
 
+.btn-warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.btn-warning:hover:not(:disabled) {
+  background-color: #e0a800;
+}
+
 .btn-small {
   padding: 8px 20px;
   font-size: 0.9rem;

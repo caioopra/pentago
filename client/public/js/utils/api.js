@@ -259,6 +259,22 @@ const UIUtils = {
   },
 
   /**
+   * Mostra mensagem generica (wrapper para showError/showSuccess)
+   */
+  showMessage(message, type = 'info', elementId = 'message') {
+    switch (type) {
+      case 'error':
+        this.showError(message, elementId);
+        break;
+      case 'success':
+        this.showSuccess(message, elementId);
+        break;
+      default:
+        this.showInfo(message, elementId);
+    }
+  },
+
+  /**
    * Redireciona para uma página
    */
   redirect(url, delay = 0) {

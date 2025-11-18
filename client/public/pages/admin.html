@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Administrativo - Pentago Web</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .admin-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .admin-tab {
+      padding: 10px 20px;
+      border: 2px solid var(--border-color);
+      border-radius: 5px;
+      background: var(--bg-secondary);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .admin-tab:hover {
+      border-color: var(--accent-color);
+    }
+
+    .admin-tab.active {
+      background: var(--accent-color);
+      color: white;
+      border-color: var(--accent-color);
+    }
+
+    .admin-section {
+      display: none;
+    }
+
+    .admin-section.active {
+      display: block;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      border: 1px solid var(--border-color);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--accent-color);
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-top: 5px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .data-table th {
+      background: var(--bg-secondary);
+      font-weight: bold;
+    }
+
+    .data-table tr:hover {
+      background: var(--bg-secondary);
+    }
+
+    .action-btn {
+      padding: 5px 10px;
+      margin: 2px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .action-btn.ban {
+      background: var(--error-bg);
+      color: var(--error-text);
+      border: 1px solid var(--error-border);
+    }
+
+    .action-btn.unban {
+      background: var(--success-bg);
+      color: var(--success-text);
+      border: 1px solid var(--success-border);
+    }
+
+    .action-btn.delete {
+      background: #dc3545;
+      color: white;
+    }
+
+    .action-btn.promote {
+      background: var(--accent-color);
+      color: white;
+    }
+
+    .action-btn.demote {
+      background: #6c757d;
+      color: white;
+    }
+
+    .badge {
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-size: 0.8rem;
+    }
+
+    .badge.admin {
+      background: var(--accent-color);
+      color: white;
+    }
+
+    .badge.user {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+
+    .badge.banned {
+      background: var(--error-bg);
+      color: var(--error-text);
+    }
+
+    .badge.online {
+      background: var(--success-bg);
+      color: var(--success-text);
+    }
+
+    .badge.offline {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .search-bar input,
+    .search-bar select {
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+    }
+
+    .search-bar input {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .pagination button {
+      padding: 8px 15px;
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pagination button:hover:not(:disabled) {
+      background: var(--accent-color);
+      color: white;
+      border-color: var(--accent-color);
+    }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .config-section {
+      background: var(--bg-secondary);
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .config-section h4 {
+      margin-bottom: 15px;
+      color: var(--accent-color);
+    }
+
+    .config-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .config-item:last-child {
+      border-bottom: none;
+    }
+
+    .config-label {
+      color: var(--text-secondary);
+    }
+
+    .config-value {
+      font-weight: bold;
+    }
+
+    .top-players-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .top-players-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .top-players-list li:last-child {
+      border-bottom: none;
+    }
+
+    .rank-number {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--accent-color);
+      width: 30px;
+    }
+
+    .player-avatar-small {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .player-info {
+      flex: 1;
+    }
+
+    .player-score {
+      font-weight: bold;
+      color: var(--accent-color);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-primary);
+      padding: 30px;
+      border-radius: 10px;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    .modal-header {
+      margin-bottom: 20px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .data-table {
+        font-size: 0.85rem;
+      }
+
+      .action-btn {
+        padding: 3px 6px;
+        font-size: 0.75rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>Painel Administrativo</h1>
+      <a href="/pages/index.html" class="btn-back">Voltar</a>
+    </header>
+
+    <main>
+      <div id="message" style="display: none; margin-bottom: 1rem;"></div>
+
+      <!-- Navigation Tabs -->
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-section="dashboard">Dashboard</button>
+        <button class="admin-tab" data-section="users">Usuarios</button>
+        <button class="admin-tab" data-section="games">Jogos</button>
+        <button class="admin-tab" data-section="config">Configuracoes</button>
+      </div>
+
+      <!-- Dashboard Section -->
+      <div id="dashboard" class="admin-section active">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Estatisticas do Sistema</h2>
+          </div>
+          <div class="card-body">
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-value" id="totalUsers">-</div>
+                <div class="stat-label">Total de Usuarios</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="onlineUsers">-</div>
+                <div class="stat-label">Usuarios Online</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="bannedUsers">-</div>
+                <div class="stat-label">Usuarios Banidos</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="adminUsers">-</div>
+                <div class="stat-label">Administradores</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="totalGames">-</div>
+                <div class="stat-label">Total de Jogos</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="activeGames">-</div>
+                <div class="stat-label">Jogos Ativos</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="newUsersWeek">-</div>
+                <div class="stat-label">Novos Usuarios (7 dias)</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="recentGamesWeek">-</div>
+                <div class="stat-label">Jogos Recentes (7 dias)</div>
+              </div>
+            </div>
+
+            <h3 style="margin-top: 30px; margin-bottom: 15px;">Top 5 Jogadores</h3>
+            <ul class="top-players-list" id="topPlayersList">
+              <li>Carregando...</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users Section -->
+      <div id="users" class="admin-section">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Gerenciar Usuarios</h2>
+          </div>
+          <div class="card-body">
+            <div class="search-bar">
+              <input type="text" id="userSearch" placeholder="Buscar por nome ou email...">
+              <select id="userRoleFilter">
+                <option value="">Todos os papeis</option>
+                <option value="user">Usuario</option>
+                <option value="admin">Admin</option>
+              </select>
+              <select id="userBanFilter">
+                <option value="">Todos os status</option>
+                <option value="false">Ativos</option>
+                <option value="true">Banidos</option>
+              </select>
+              <button class="btn btn-primary" id="searchUsersBtn">Buscar</button>
+            </div>
+
+            <div style="overflow-x: auto;">
+              <table class="data-table" id="usersTable">
+                <thead>
+                  <tr>
+                    <th>Usuario</th>
+                    <th>Email</th>
+                    <th>Papel</th>
+                    <th>Status</th>
+                    <th>Pontos</th>
+                    <th>Acoes</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                  <tr>
+                    <td colspan="6" style="text-align: center;">Carregando...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="pagination" id="usersPagination">
+              <button id="usersPrevBtn" disabled>Anterior</button>
+              <span id="usersPageInfo">Pagina 1</span>
+              <button id="usersNextBtn">Proximo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Games Section -->
+      <div id="games" class="admin-section">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Gerenciar Jogos</h2>
+          </div>
+          <div class="card-body">
+            <div class="search-bar">
+              <select id="gameStatusFilter">
+                <option value="">Todos os status</option>
+                <option value="waiting">Aguardando</option>
+                <option value="playing">Em andamento</option>
+                <option value="finished">Finalizado</option>
+                <option value="abandoned">Abandonado</option>
+              </select>
+              <button class="btn btn-primary" id="searchGamesBtn">Filtrar</button>
+            </div>
+
+            <div style="overflow-x: auto;">
+              <table class="data-table" id="gamesTable">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Jogador 1</th>
+                    <th>Jogador 2</th>
+                    <th>Status</th>
+                    <th>Vencedor</th>
+                    <th>Data</th>
+                    <th>Acoes</th>
+                  </tr>
+                </thead>
+                <tbody id="gamesTableBody">
+                  <tr>
+                    <td colspan="7" style="text-align: center;">Carregando...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="pagination" id="gamesPagination">
+              <button id="gamesPrevBtn" disabled>Anterior</button>
+              <span id="gamesPageInfo">Pagina 1</span>
+              <button id="gamesNextBtn">Proximo</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Config Section -->
+      <div id="config" class="admin-section">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Configuracoes do Sistema</h2>
+          </div>
+          <div class="card-body">
+            <p style="margin-bottom: 20px; color: var(--text-secondary);">
+              As configuracoes abaixo sao definidas no arquivo .env do servidor. Para altera-las, edite o arquivo e reinicie o servidor.
+            </p>
+
+            <div class="config-grid" id="configGrid">
+              <div class="config-section">
+                <h4>Configuracoes do Jogo</h4>
+                <div class="config-item">
+                  <span class="config-label">Tamanho max. da fila:</span>
+                  <span class="config-value" id="configMaxQueue">-</span>
+                </div>
+                <div class="config-item">
+                  <span class="config-label">Timeout de inatividade:</span>
+                  <span class="config-value" id="configInactivity">-</span>
+                </div>
+                <div class="config-item">
+                  <span class="config-label">Duracao max. do jogo:</span>
+                  <span class="config-value" id="configMaxDuration">-</span>
+                </div>
+              </div>
+
+              <div class="config-section">
+                <h4>Configuracoes de Video</h4>
+                <div class="config-item">
+                  <span class="config-label">Idade max. do video:</span>
+                  <span class="config-value" id="configVideoAge">-</span>
+                </div>
+                <div class="config-item">
+                  <span class="config-label">Tamanho max.:</span>
+                  <span class="config-value" id="configVideoSize">-</span>
+                </div>
+                <div class="config-item">
+                  <span class="config-label">FPS:</span>
+                  <span class="config-value" id="configVideoFps">-</span>
+                </div>
+                <div class="config-item">
+                  <span class="config-label">Bitrate:</span>
+                  <span class="config-value" id="configVideoBitrate">-</span>
+                </div>
+              </div>
+
+              <div class="config-section">
+                <h4>Limites</h4>
+                <div class="config-item">
+                  <span class="config-label">Upload max.:</span>
+                  <span class="config-value" id="configUploadSize">-</span>
+                </div>
+                <div class="config-item">
+                  <span class="config-label">Rate limit (janela):</span>
+                  <span class="config-value" id="configRateWindow">-</span>
+                </div>
+                <div class="config-item">
+                  <span class="config-label">Rate limit (max):</span>
+                  <span class="config-value" id="configRateMax">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Ban Modal -->
+  <div id="banModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Banir Usuario</h3>
+      </div>
+      <div class="modal-body">
+        <p>Voce esta prestes a banir o usuario: <strong id="banUserName"></strong></p>
+        <div class="form-group" style="margin-top: 15px;">
+          <label for="banReason">Motivo do banimento:</label>
+          <textarea id="banReason" rows="3" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 5px; background: var(--bg-primary); color: var(--text-primary);"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelBanBtn">Cancelar</button>
+        <button class="btn btn-danger" id="confirmBanBtn">Confirmar Banimento</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Modal -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Deletar Usuario</h3>
+      </div>
+      <div class="modal-body">
+        <p>Voce tem certeza que deseja deletar o usuario: <strong id="deleteUserName"></strong>?</p>
+        <p style="color: var(--error-text); margin-top: 10px;">Esta acao nao pode ser desfeita!</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelDeleteBtn">Cancelar</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn">Confirmar Exclusao</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/utils/api.js"></script>
+  <script src="/js/pages/admin.js"></script>
+</body>
+
+</html>

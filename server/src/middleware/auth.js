@@ -40,6 +40,15 @@ exports.protect = async (req, res, next) => {
         });
       }
 
+      // Verificar se o usuário está banido
+      if (req.user.isBanned) {
+        return res.status(403).json({
+          success: false,
+          message: 'Sua conta foi suspensa. Entre em contato com o administrador.',
+          isBanned: true
+        });
+      }
+
       next();
     } catch (err) {
       return res.status(401).json({

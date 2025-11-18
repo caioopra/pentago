@@ -75,6 +75,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/games', require('./routes/games'));
+app.use('/api/admin', require('./routes/admin'));
 
 // Debug routes (apenas desenvolvimento - remover em produção)
 if (process.env.NODE_ENV !== 'production') {
