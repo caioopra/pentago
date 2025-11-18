@@ -11,8 +11,8 @@
 
 ## 👥 Equipe
 
-- **Caio Prá Silva** - Back-end & DevOps
-- **Pedro Nack Martins** - Front-end & UI/UX
+- **Caio Prá Silva**
+- **Pedro Nack Martins**
 
 ## 📖 Sobre o Projeto
 
@@ -266,25 +266,12 @@ Este projeto implementa múltiplas camadas de segurança:
 ## 📄 Licença
 
 Este projeto é desenvolvido para fins acadêmicos como parte da disciplina INE5646 - Programação para Web da UFSC.
-
-## 📞 Contato
-
-- **Caio Prá Silva** - caio.pra@grad.ufsc.br
-- **Pedro Nack Martins** - pedro.nack@grad.ufsc.br
-
-## 🙏 Agradecimentos
-
-- Professor da disciplina INE5646
-- Monitores
-- Colegas de turma
-- Comunidade open-source
-
 ---
 
 <div align="center">
 
 **Desenvolvido por Caio Prá e Pedro Nack**
 
-[Repositório](https://github.com/caioopra/pentago-web) • [Documentação](./PLANEJAMENTO_ESTRATEGICO.md) • [Issues](https://github.com/caioopra/pentago-web/issues)
+[Repositório](https://github.com/caioopra/pentago) • [Documentação](./PLANEJAMENTO_ESTRATEGICO.md) • [Issues](https://github.com/caioopra/pentago/issues)
 
 </div>
