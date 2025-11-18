@@ -21,7 +21,9 @@ const state = {
     pages: 0,
     status: ''
   },
-  currentUserId: null
+  currentUserId: null,
+  refreshInterval: null,
+  refreshRate: 30000 // 30 segundos
 };
 
 // Inicializacao
@@ -57,7 +59,30 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Carregar dados iniciais
   loadDashboard();
+
+  // Iniciar auto-refresh do dashboard
+  startDashboardRefresh();
 });
+
+// Iniciar auto-refresh do dashboard
+function startDashboardRefresh() {
+  stopDashboardRefresh(); // Limpar intervalo anterior se existir
+  state.refreshInterval = setInterval(() => {
+    // Apenas atualizar se estiver na aba dashboard
+    const dashboardTab = document.querySelector('.admin-tab[data-section="dashboard"]');
+    if (dashboardTab && dashboardTab.classList.contains('active')) {
+      loadDashboard();
+    }
+  }, state.refreshRate);
+}
+
+// Parar auto-refresh do dashboard
+function stopDashboardRefresh() {
+  if (state.refreshInterval) {
+    clearInterval(state.refreshInterval);
+    state.refreshInterval = null;
+  }
+}
 
 // Configurar event listeners
 function setupEventListeners() {
@@ -67,6 +92,18 @@ function setupEventListeners() {
       const section = tab.dataset.section;
       switchSection(section);
     });
+  });
+
+  // Dashboard refresh button
+  document.getElementById('refreshDashboardBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('refreshDashboardBtn');
+    btn.disabled = true;
+    btn.textContent = 'Atualizando...';
+    await loadDashboard();
+    btn.disabled = false;
+    btn.innerHTML = '&#8635; Atualizar';
+    // Reiniciar o timer do auto-refresh
+    startDashboardRefresh();
   });
 
   // Users search
@@ -189,6 +226,11 @@ async function loadDashboard() {
 
     if (response.success) {
       const { users, games, topPlayers } = response.data;
+
+      // Atualizar indicador de ultima atualizacao
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('lastUpdate').textContent = `Ultima atualizacao: ${timeStr} (atualiza a cada 30s)`;
 
       // Update stats
       document.getElementById('totalUsers').textContent = users.total;
