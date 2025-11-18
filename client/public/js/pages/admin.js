@@ -185,7 +185,7 @@ function switchSection(sectionId) {
 // Carregar dashboard com estatisticas
 async function loadDashboard() {
   try {
-    const response = await apiRequest('/api/admin/stats');
+    const response = await apiRequest('/admin/stats');
 
     if (response.success) {
       const { users, games, topPlayers } = response.data;
@@ -233,7 +233,7 @@ async function loadUsers() {
     if (state.users.role) params.append('role', state.users.role);
     if (state.users.isBanned) params.append('isBanned', state.users.isBanned);
 
-    const response = await apiRequest(`/api/admin/users?${params}`);
+    const response = await apiRequest(`/admin/users?${params}`);
 
     if (response.success) {
       state.users.total = response.pagination.total;
@@ -315,7 +315,7 @@ async function banUser() {
 
   try {
     const reason = document.getElementById('banReason').value || 'Motivo nao especificado';
-    const response = await apiRequest(`/api/admin/users/${state.currentUserId}/ban`, {
+    const response = await apiRequest(`/admin/users/${state.currentUserId}/ban`, {
       method: 'PUT',
       body: JSON.stringify({ reason })
     });
@@ -339,7 +339,7 @@ async function showUnbanUser(userId, userName) {
   if (!confirm(`Deseja desbanir o usuario ${userName}?`)) return;
 
   try {
-    const response = await apiRequest(`/api/admin/users/${userId}/unban`, {
+    const response = await apiRequest(`/admin/users/${userId}/unban`, {
       method: 'PUT'
     });
 
@@ -374,7 +374,7 @@ async function deleteUser() {
   if (!state.currentUserId) return;
 
   try {
-    const response = await apiRequest(`/api/admin/users/${state.currentUserId}`, {
+    const response = await apiRequest(`/admin/users/${state.currentUserId}`, {
       method: 'DELETE'
     });
 
@@ -397,7 +397,7 @@ async function promoteUser(userId, userName) {
   if (!confirm(`Deseja promover ${userName} a administrador?`)) return;
 
   try {
-    const response = await apiRequest(`/api/admin/users/${userId}/promote`, {
+    const response = await apiRequest(`/admin/users/${userId}/promote`, {
       method: 'PUT'
     });
 
@@ -419,7 +419,7 @@ async function demoteUser(userId, userName) {
   if (!confirm(`Deseja rebaixar ${userName} a usuario comum?`)) return;
 
   try {
-    const response = await apiRequest(`/api/admin/users/${userId}/demote`, {
+    const response = await apiRequest(`/admin/users/${userId}/demote`, {
       method: 'PUT'
     });
 
@@ -446,7 +446,7 @@ async function loadGames() {
 
     if (state.games.status) params.append('status', state.games.status);
 
-    const response = await apiRequest(`/api/admin/games?${params}`);
+    const response = await apiRequest(`/admin/games?${params}`);
 
     if (response.success) {
       state.games.total = response.pagination.total;
@@ -504,7 +504,7 @@ async function deleteGame(gameId) {
   if (!confirm('Deseja deletar este jogo?')) return;
 
   try {
-    const response = await apiRequest(`/api/admin/games/${gameId}`, {
+    const response = await apiRequest(`/admin/games/${gameId}`, {
       method: 'DELETE'
     });
 
@@ -524,7 +524,7 @@ async function deleteGame(gameId) {
 // Carregar configuracoes
 async function loadConfig() {
   try {
-    const response = await apiRequest('/api/admin/config');
+    const response = await apiRequest('/admin/config');
 
     if (response.success) {
       const { game, video, upload, rateLimit } = response.data;
