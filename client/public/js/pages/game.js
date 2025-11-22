@@ -26,7 +26,7 @@ class PentagoGameClient {
    */
   async init() {
     // Verificar autenticação
-    const token = localStorage.getItem('token');
+    const token = AuthManager.getToken();
 
     if (!token) {
       this.showMessage('Você precisa estar logado para jogar!', 'error');
@@ -75,7 +75,7 @@ class PentagoGameClient {
       console.error('❌ Erro de autenticação:', data.message);
       this.showMessage('Erro de autenticação. Faça login novamente.', 'error');
       setTimeout(() => {
-        localStorage.removeItem('token');
+        AuthManager.logout();
         window.location.href = '/pages/login.html';
       }, 2000);
     });
@@ -171,7 +171,7 @@ class PentagoGameClient {
    */
   async findOrCreateGame() {
     try {
-      const token = localStorage.getItem('token');
+      const token = AuthManager.getToken();
 
       const response = await fetch('/api/games/create', {
         method: 'POST',
