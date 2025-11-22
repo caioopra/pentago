@@ -2,10 +2,11 @@ const { doubleCsrf } = require('csrf-csrf');
 
 // Configuração do CSRF protection
 const {
-  generateToken, // Gera um novo token CSRF
+  generateCsrfToken, // Gera um novo token CSRF
   doubleCsrfProtection, // Middleware de proteção
 } = doubleCsrf({
   getSecret: () => process.env.CSRF_SECRET || 'your-csrf-secret-change-this-in-production',
+  getSessionIdentifier: (req) => req.ip || 'unknown', // Identifica a sessão pelo IP do cliente
   cookieName: 'x-csrf-token',
   cookieOptions: {
     sameSite: 'strict',
@@ -27,7 +28,7 @@ const {
  */
 const csrfTokenGenerator = (req, res, next) => {
   try {
-    const csrfToken = generateToken(req, res);
+    const csrfToken = generateCsrfToken(req, res);
     req.csrfToken = () => csrfToken;
     next();
   } catch (error) {
@@ -86,5 +87,5 @@ module.exports = {
   csrfTokenGenerator,
   csrfErrorHandler,
   getCsrfToken,
-  generateToken
+  generateCsrfToken
 };
