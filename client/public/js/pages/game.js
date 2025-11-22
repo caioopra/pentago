@@ -50,7 +50,9 @@ class PentagoGameClient {
    * Conectar ao Socket.io
    */
   connectSocket(token) {
-    this.socket = io('http://localhost:3000', {
+    // Usar URL dinâmica baseada no host atual
+    const socketUrl = window.location.origin;
+    this.socket = io(socketUrl, {
       transports: ['websocket', 'polling']
     });
 

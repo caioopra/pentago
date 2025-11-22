@@ -11,6 +11,7 @@ const API_BASE_URL = '/api';
 class AuthManager {
   static TOKEN_KEY = 'pentago_auth_token';
   static USER_KEY = 'pentago_user';
+  static CSRF_TOKEN_KEY = 'pentago_csrf_token';
 
   static setToken(token) {
     localStorage.setItem(this.TOKEN_KEY, token);
@@ -22,6 +23,35 @@ class AuthManager {
 
   static removeToken() {
     localStorage.removeItem(this.TOKEN_KEY);
+  }
+
+  static setCsrfToken(token) {
+    localStorage.setItem(this.CSRF_TOKEN_KEY, token);
+  }
+
+  static getCsrfToken() {
+    return localStorage.getItem(this.CSRF_TOKEN_KEY);
+  }
+
+  static removeCsrfToken() {
+    localStorage.removeItem(this.CSRF_TOKEN_KEY);
+  }
+
+  static async fetchCsrfToken() {
+    try {
+      const response = await fetch('/api/csrf-token', {
+        method: 'GET',
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (data.success && data.csrfToken) {
+        this.setCsrfToken(data.csrfToken);
+        return data.csrfToken;
+      }
+    } catch (error) {
+      console.error('Erro ao obter token CSRF:', error);
+    }
+    return null;
   }
 
   static setUser(user) {
@@ -44,6 +74,7 @@ class AuthManager {
   static logout() {
     this.removeToken();
     this.removeUser();
+    this.removeCsrfToken();
   }
 }
 
@@ -61,6 +92,21 @@ async function apiRequest(endpoint, options = {}) {
     defaultHeaders['Authorization'] = `Bearer ${token}`;
   }
 
+  // Adicionar token CSRF para métodos que modificam dados
+  const method = (options.method || 'GET').toUpperCase();
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+    let csrfToken = AuthManager.getCsrfToken();
+
+    // Se não tiver token CSRF, buscar um novo
+    if (!csrfToken) {
+      csrfToken = await AuthManager.fetchCsrfToken();
+    }
+
+    if (csrfToken) {
+      defaultHeaders['x-csrf-token'] = csrfToken;
+    }
+  }
+
   // Only set Content-Type for non-FormData requests
   if (!(options.body instanceof FormData)) {
     defaultHeaders['Content-Type'] = 'application/json';
@@ -68,6 +114,7 @@ async function apiRequest(endpoint, options = {}) {
 
   const config = {
     ...options,
+    credentials: 'include', // Importante para cookies CSRF
     headers: {
       ...defaultHeaders,
       ...options.headers,
@@ -84,9 +131,32 @@ async function apiRequest(endpoint, options = {}) {
     const data = await response.json();
 
     if (!response.ok) {
+      // Se erro CSRF, buscar novo token e tentar novamente
+      if (response.status === 403 && data.code === 'CSRF_ERROR') {
+        const newCsrfToken = await AuthManager.fetchCsrfToken();
+        if (newCsrfToken) {
+          // Tentar novamente com o novo token
+          if (defaultHeaders['x-csrf-token']) {
+            defaultHeaders['x-csrf-token'] = newCsrfToken;
+            config.headers['x-csrf-token'] = newCsrfToken;
+            const retryResponse = await fetch(url, config);
+            const retryData = await retryResponse.json();
+
+            if (!retryResponse.ok) {
+              throw {
+                status: retryResponse.status,
+                message: retryData.message || 'Erro na requisição',
+                data: retryData
+              };
+            }
+            return retryData;
+          }
+        }
+      }
+
       throw {
         status: response.status,
-        message: data.message || 'Erro na requisição',
+        message: data.message || data.error || 'Erro na requisição',
         data: data
       };
     }

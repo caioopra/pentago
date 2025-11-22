@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
 const { authValidation } = require('../middleware/validate');
+const { authLimiter, createLimiter } = require('../middleware/rateLimiter');
 const {
   register,
   login,
@@ -10,9 +11,9 @@ const {
   updatePassword
 } = require('../controllers/authController');
 
-// Rotas públicas
-router.post('/register', authValidation.register, register);
-router.post('/login', authValidation.login, login);
+// Rotas públicas (com rate limiting)
+router.post('/register', createLimiter, authValidation.register, register);
+router.post('/login', authLimiter, authValidation.login, login);
 
 // Rotas protegidas (requerem autenticação)
 router.post('/logout', protect, logout);

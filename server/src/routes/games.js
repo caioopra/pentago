@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
+const { createLimiter } = require('../middleware/rateLimiter');
 const {
   createGame,
   getGame,
@@ -12,8 +13,8 @@ const {
 // Todas as rotas requerem autenticação
 router.use(protect);
 
-// Criar ou entrar em partida
-router.post('/create', createGame);
+// Criar ou entrar em partida (com rate limiting)
+router.post('/create', createLimiter, createGame);
 
 // Buscar partidas do usuário
 router.get('/my-games', getMyGames);
