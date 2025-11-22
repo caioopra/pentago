@@ -18,6 +18,9 @@ class PentagoGameDemo {
     // Bot AI (criado com dificuldade)
     this.bot = new PentagoBot(this.difficulty);
 
+    // Flag para controlar animação de rotação
+    this.isRotating = false;
+
     // Inicializar
     this.initializeEventListeners();
     this.updateDisplay();
@@ -93,25 +96,24 @@ class PentagoGameDemo {
     const quadrant = parseInt(e.target.dataset.quadrant);
     const direction = e.target.dataset.direction;
 
-    // Rotaciona
-    this.rotateQuadrant(quadrant, direction);
-    this.updateDisplay();
+    // Rotaciona (com callback para continuar após animação)
+    this.rotateQuadrant(quadrant, direction, () => {
+      // Verifica vitória
+      if (this.checkWinCondition()) {
+        this.endGame(this.currentPlayer);
+        return;
+      }
 
-    // Verifica vitória
-    if (this.checkWinCondition()) {
-      this.endGame(this.currentPlayer);
-      return;
-    }
+      // Troca jogador e volta para fase de colocação
+      this.switchPlayer();
+      this.gamePhase = 'place';
+      this.updateDisplay();
 
-    // Troca jogador e volta para fase de colocação
-    this.switchPlayer();
-    this.gamePhase = 'place';
-    this.updateDisplay();
-
-    // Turno do bot
-    if (this.currentPlayer === 2) {
-      setTimeout(() => this.makeBotMove(), 500);
-    }
+      // Turno do bot
+      if (this.currentPlayer === 2) {
+        setTimeout(() => this.makeBotMove(), 500);
+      }
+    });
   }
 
   /**
@@ -124,7 +126,7 @@ class PentagoGameDemo {
   /**
    * Rotaciona um quadrante
    */
-  rotateQuadrant(quadrant, direction) {
+  rotateQuadrant(quadrant, direction, callback) {
     const quad = this.board[quadrant];
     const rotated = new Array(9);
 
@@ -152,13 +154,23 @@ class PentagoGameDemo {
       rotated[8] = quad[6];
     }
 
-    this.board[quadrant] = rotated;
+    // Marca que uma rotação está em andamento
+    this.isRotating = true;
 
-    // Animação
+    // Inicia a animação visual com a direção correta
     const quadrantElement = document.getElementById(`quadrant-${quadrant}`);
-    quadrantElement.classList.add('rotate-animation');
+    const animationClass = direction === 'right' ? 'rotate-animation-right' : 'rotate-animation-left';
+    quadrantElement.classList.add(animationClass);
+
+    // Aguarda a animação terminar ANTES de atualizar o board
     setTimeout(() => {
-      quadrantElement.classList.remove('rotate-animation');
+      // Atualiza o board após a animação
+      this.board[quadrant] = rotated;
+
+      quadrantElement.classList.remove(animationClass);
+      this.isRotating = false; // Rotação concluída
+      this.updateBoard(); // Atualiza o visual após a animação
+      if (callback) callback(); // Executa callback se fornecido
     }, 500);
   }
 
@@ -190,17 +202,16 @@ class PentagoGameDemo {
       const move = this.bot.makeMove(this);
       if (!move) return;
 
-      this.rotateQuadrant(move.quadrant, move.direction);
-      this.updateDisplay();
+      this.rotateQuadrant(move.quadrant, move.direction, () => {
+        if (this.checkWinCondition()) {
+          this.endGame(this.currentPlayer);
+          return;
+        }
 
-      if (this.checkWinCondition()) {
-        this.endGame(this.currentPlayer);
-        return;
-      }
-
-      this.switchPlayer();
-      this.gamePhase = 'place';
-      this.updateDisplay();
+        this.switchPlayer();
+        this.gamePhase = 'place';
+        this.updateDisplay();
+      });
     }
   }
 
@@ -323,6 +334,11 @@ class PentagoGameDemo {
    * Atualiza o tabuleiro visual
    */
   updateBoard() {
+    // Não atualiza o tabuleiro se uma rotação estiver em andamento
+    if (this.isRotating) {
+      return;
+    }
+
     for (let q = 0; q < 4; q++) {
       for (let c = 0; c < 9; c++) {
         const cell = document.querySelector(`[data-quadrant="${q}"][data-cell="${c}"]`);

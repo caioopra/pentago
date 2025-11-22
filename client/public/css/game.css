@@ -294,16 +294,29 @@
   opacity: 0.5;
 }
 
-.rotate-animation {
-  animation: rotate-quadrant 0.5s ease;
+.rotate-animation-right {
+  animation: rotate-quadrant-right 0.5s ease;
 }
 
-@keyframes rotate-quadrant {
+.rotate-animation-left {
+  animation: rotate-quadrant-left 0.5s ease;
+}
+
+@keyframes rotate-quadrant-right {
   0% {
     transform: rotate(0deg);
   }
   100% {
     transform: rotate(90deg);
+  }
+}
+
+@keyframes rotate-quadrant-left {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(-90deg);
   }
 }
 
