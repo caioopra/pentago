@@ -472,6 +472,33 @@
   box-shadow: 0 10px 30px rgba(104, 211, 145, 0.4);
 }
 
+/* Botão "Jogar Novamente" dentro da mensagem */
+.btn-play-again {
+  background: white;
+  color: var(--text-primary, #2d3748);
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.btn-play-again:hover {
+  background: var(--primary-color, #667eea);
+  color: white;
+  border-color: white;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-play-again:active {
+  transform: scale(0.98);
+}
+
 @keyframes message-appear {
   from {
     transform: scale(0.5) translateY(-20px);

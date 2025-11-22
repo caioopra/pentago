@@ -12,9 +12,11 @@ class PentagoGameDemo {
     this.gameOver = false;
     this.winner = null;
 
-    // Bot AI
-    this.bot = new PentagoBot();
+    // Dificuldade inicial
     this.difficulty = 'easy'; // easy, medium, hard
+
+    // Bot AI (criado com dificuldade)
+    this.bot = new PentagoBot(this.difficulty);
 
     // Inicializar
     this.initializeEventListeners();
@@ -30,8 +32,9 @@ class PentagoGameDemo {
     // Seletor de dificuldade
     document.getElementById('difficulty').addEventListener('change', (e) => {
       this.difficulty = e.target.value;
-      this.showMessage(`Dificuldade alterada para: ${this.getDifficultyLabel()}`, 'info');
-      setTimeout(() => this.hideMessage(), 2000);
+      this.bot = new PentagoBot(this.difficulty); // Recria bot com nova dificuldade
+      this.showMessage(`Dificuldade alterada para: ${this.getDifficultyLabel()}. Reinicie o jogo para aplicar.`, 'info');
+      setTimeout(() => this.hideMessage(), 3000);
     });
 
     // Células do tabuleiro
@@ -389,13 +392,16 @@ class PentagoGameDemo {
     this.gameOver = true;
     this.winner = winner;
 
+    let message = '';
     if (winner === 'draw') {
-      this.showMessage('🤝 Empate! O tabuleiro ficou cheio.', 'draw');
+      message = '🤝 Empate! O tabuleiro ficou cheio.';
     } else if (winner === 1) {
-      this.showMessage('🎉 VOCÊ VENCEU! Parabéns! 🎉', 'winner');
+      message = '🎉 VOCÊ VENCEU! Parabéns! 🎉';
     } else {
-      this.showMessage('😢 O Bot venceu! Tente novamente.', 'info');
+      message = '😢 O Bot venceu! Tente novamente.';
     }
+
+    this.showMessageWithPlayAgain(message, winner);
 
     // Desabilita botões
     document.querySelectorAll('.rotate-btn').forEach(btn => {
@@ -413,9 +419,12 @@ class PentagoGameDemo {
     this.gameOver = false;
     this.winner = null;
 
+    // Recria bot com dificuldade atual
+    this.bot = new PentagoBot(this.difficulty);
+
     this.hideMessage();
     this.updateDisplay();
-    this.showMessage('Novo jogo iniciado! Boa sorte!', 'success');
+    this.showMessage(`Novo jogo iniciado em dificuldade ${this.getDifficultyLabel()}! Boa sorte!`, 'success');
     setTimeout(() => this.hideMessage(), 2000);
   }
 
@@ -438,6 +447,39 @@ class PentagoGameDemo {
     const messageEl = document.getElementById('gameMessage');
     messageEl.textContent = text;
     messageEl.className = `game-message ${type}`;
+    messageEl.classList.remove('hidden');
+  }
+
+  /**
+   * Exibe mensagem com botão "Jogar Novamente"
+   */
+  showMessageWithPlayAgain(text, winner) {
+    const messageEl = document.getElementById('gameMessage');
+    messageEl.innerHTML = ''; // Limpa conteúdo anterior
+
+    // Determina a classe baseada no resultado
+    let messageClass = 'info';
+    if (winner === 'draw') {
+      messageClass = 'draw';
+    } else if (winner === 1) {
+      messageClass = 'winner';
+    }
+
+    messageEl.className = `game-message ${messageClass}`;
+
+    // Cria o texto da mensagem
+    const messageText = document.createElement('span');
+    messageText.textContent = text;
+    messageEl.appendChild(messageText);
+
+    // Cria o botão "Jogar Novamente"
+    const playAgainBtn = document.createElement('button');
+    playAgainBtn.textContent = '🔄 Jogar Novamente';
+    playAgainBtn.className = 'btn btn-play-again';
+    playAgainBtn.style.marginLeft = '15px';
+    playAgainBtn.addEventListener('click', () => this.resetGame());
+
+    messageEl.appendChild(playAgainBtn);
     messageEl.classList.remove('hidden');
   }
 

@@ -4,9 +4,10 @@
  */
 
 class PentagoBot {
-  constructor() {
+  constructor(difficulty = 'medium') {
     this.playerNumber = 2; // Bot é sempre o jogador 2
     this.opponent = 1;     // Humano é sempre o jogador 1
+    this.difficulty = difficulty; // 'easy', 'medium', 'hard'
   }
 
   /**
@@ -30,6 +31,11 @@ class PentagoBot {
     const moves = this.getValidPlacements(game.board);
     if (moves.length === 0) return null;
 
+    // EASY: Jogada aleatória 70% do tempo, estratégica 30%
+    if (this.difficulty === 'easy' && Math.random() < 0.7) {
+      return moves[Math.floor(Math.random() * moves.length)];
+    }
+
     let bestMove = null;
     let bestScore = -Infinity;
 
@@ -49,6 +55,12 @@ class PentagoBot {
    */
   chooseRotation(game) {
     const rotations = this.getValidRotations();
+
+    // EASY: Rotação aleatória 80% do tempo
+    if (this.difficulty === 'easy' && Math.random() < 0.8) {
+      return rotations[Math.floor(Math.random() * rotations.length)];
+    }
+
     let bestRotation = null;
     let bestScore = -Infinity;
 
@@ -99,20 +111,32 @@ class PentagoBot {
 
     let score = 0;
 
-    // Prioridade 1: Vitória imediata
+    // EASY: Apenas vitória imediata e bloqueio básico
+    if (this.difficulty === 'easy') {
+      score += this.checkImmediateWin(tempBoard, this.playerNumber) * 10000;
+      score += this.checkBlockOpponentWin(game.board, move) * 3000;
+      score += Math.random() * 100; // Mais aleatoriedade
+      return score;
+    }
+
+    // MEDIUM: Estratégia balanceada
+    if (this.difficulty === 'medium') {
+      score += this.checkImmediateWin(tempBoard, this.playerNumber) * 10000;
+      score += this.checkBlockOpponentWin(game.board, move) * 5000;
+      score += this.evaluateThreats(tempBoard, this.playerNumber) * 100;
+      score += this.evaluatePositionalValue(move) * 10;
+      score += Math.random() * 5;
+      return score;
+    }
+
+    // HARD: Estratégia avançada com look-ahead
     score += this.checkImmediateWin(tempBoard, this.playerNumber) * 10000;
-
-    // Prioridade 2: Bloquear vitória do oponente
-    score += this.checkBlockOpponentWin(game.board, move) * 5000;
-
-    // Prioridade 3: Criar ameaças
-    score += this.evaluateThreats(tempBoard, this.playerNumber) * 100;
-
-    // Prioridade 4: Posição estratégica (centro > cantos > bordas)
-    score += this.evaluatePositionalValue(move) * 10;
-
-    // Adicionar aleatoriedade para variação
-    score += Math.random() * 5;
+    score += this.checkBlockOpponentWin(game.board, move) * 6000;
+    score += this.evaluateThreats(tempBoard, this.playerNumber) * 150;
+    score -= this.evaluateThreats(tempBoard, this.opponent) * 80; // Reduz ameaças do oponente
+    score += this.evaluatePositionalValue(move) * 15;
+    score += this.evaluateControl(tempBoard) * 20; // Controle do tabuleiro
+    score += Math.random() * 2; // Menos aleatoriedade
 
     return score;
   }
@@ -126,20 +150,31 @@ class PentagoBot {
 
     let score = 0;
 
-    // Prioridade 1: Vitória imediata após rotação
+    // EASY: Apenas vitória e bloqueio básico
+    if (this.difficulty === 'easy') {
+      score += this.checkImmediateWin(tempBoard, this.playerNumber) * 10000;
+      score += this.checkBlockOpponentWin(tempBoard, null, this.opponent) * 3000;
+      score += Math.random() * 100;
+      return score;
+    }
+
+    // MEDIUM: Estratégia balanceada
+    if (this.difficulty === 'medium') {
+      score += this.checkImmediateWin(tempBoard, this.playerNumber) * 10000;
+      score += this.checkBlockOpponentWin(tempBoard, null, this.opponent) * 5000;
+      score += this.evaluateThreats(tempBoard, this.playerNumber) * 100;
+      score -= this.evaluateThreats(tempBoard, this.opponent) * 50;
+      score += Math.random() * 5;
+      return score;
+    }
+
+    // HARD: Estratégia avançada
     score += this.checkImmediateWin(tempBoard, this.playerNumber) * 10000;
-
-    // Prioridade 2: Evitar que oponente vença
-    score += this.checkBlockOpponentWin(tempBoard, null, this.opponent) * 5000;
-
-    // Prioridade 3: Criar ameaças
-    score += this.evaluateThreats(tempBoard, this.playerNumber) * 100;
-
-    // Prioridade 4: Reduzir ameaças do oponente
-    score -= this.evaluateThreats(tempBoard, this.opponent) * 50;
-
-    // Aleatoriedade
-    score += Math.random() * 5;
+    score += this.checkBlockOpponentWin(tempBoard, null, this.opponent) * 6000;
+    score += this.evaluateThreats(tempBoard, this.playerNumber) * 150;
+    score -= this.evaluateThreats(tempBoard, this.opponent) * 100;
+    score += this.evaluateControl(tempBoard) * 20;
+    score += Math.random() * 2;
 
     return score;
   }
@@ -243,6 +278,27 @@ class PentagoBot {
     const row = Math.floor(move.cell / 3);
     const col = move.cell % 3;
     return centerValues[row][col];
+  }
+
+  /**
+   * Avalia controle do tabuleiro (HARD difficulty)
+   * Conta a diferença entre peças do bot e do oponente
+   */
+  evaluateControl(board) {
+    let botPieces = 0;
+    let opponentPieces = 0;
+
+    for (let q = 0; q < 4; q++) {
+      for (let c = 0; c < 9; c++) {
+        if (board[q][c] === this.playerNumber) {
+          botPieces++;
+        } else if (board[q][c] === this.opponent) {
+          opponentPieces++;
+        }
+      }
+    }
+
+    return botPieces - opponentPieces;
   }
 
   /**
