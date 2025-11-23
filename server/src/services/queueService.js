@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const Game = require('../models/Game');
 
@@ -172,15 +173,15 @@ class QueueService {
 
       console.log(`🎮 Match encontrado! ${player1Entry.username} vs ${player2Entry.username}`);
 
-      // Criar partida
+      // Criar partida (converter strings de volta para ObjectId)
       const game = await Game.create({
         player1: {
-          userId: player1Entry.userId,
+          userId: new mongoose.Types.ObjectId(player1Entry.userId),
           socketId: player1Entry.socketId,
           connected: false
         },
         player2: {
-          userId: player2Entry.userId,
+          userId: new mongoose.Types.ObjectId(player2Entry.userId),
           socketId: player2Entry.socketId,
           connected: false
         },

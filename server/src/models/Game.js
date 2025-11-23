@@ -85,13 +85,18 @@ gameSchema.methods.isActive = function() {
 
 // Método para verificar se é o turno do jogador
 gameSchema.methods.isPlayerTurn = function(userId) {
-  const player1Id = this.player1.userId.toString();
-  const player2Id = this.player2.userId?.toString();
+  // Handle both populated and non-populated userId fields
+  const player1UserId = this.player1.userId;
+  const player2UserId = this.player2.userId;
 
-  if (this.currentTurn === 1 && player1Id === userId.toString()) {
+  const player1Id = (player1UserId._id || player1UserId).toString();
+  const player2Id = player2UserId ? (player2UserId._id || player2UserId).toString() : null;
+  const userIdStr = userId.toString();
+
+  if (this.currentTurn === 1 && player1Id === userIdStr) {
     return true;
   }
-  if (this.currentTurn === 2 && player2Id === userId.toString()) {
+  if (this.currentTurn === 2 && player2Id === userIdStr) {
     return true;
   }
   return false;
@@ -99,11 +104,17 @@ gameSchema.methods.isPlayerTurn = function(userId) {
 
 // Método para obter número do jogador por userId
 gameSchema.methods.getPlayerNumber = function(userId) {
-  const player1Id = this.player1.userId.toString();
-  const player2Id = this.player2.userId?.toString();
+  // Handle both populated and non-populated userId fields
+  const player1UserId = this.player1.userId;
+  const player2UserId = this.player2.userId;
 
-  if (player1Id === userId.toString()) return 1;
-  if (player2Id === userId.toString()) return 2;
+  // Get the actual ObjectId (works for both populated and non-populated)
+  const player1Id = (player1UserId._id || player1UserId).toString();
+  const player2Id = player2UserId ? (player2UserId._id || player2UserId).toString() : null;
+  const userIdStr = userId.toString();
+
+  if (player1Id === userIdStr) return 1;
+  if (player2Id === userIdStr) return 2;
   return null;
 };
 

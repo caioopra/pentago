@@ -124,7 +124,7 @@ class GameSocketService {
 
       const { gameId } = data;
 
-      const game = await Game.findById(gameId)
+      let game = await Game.findById(gameId)
         .populate('player1.userId', 'name avatar')
         .populate('player2.userId', 'name avatar');
 
@@ -144,16 +144,20 @@ class GameSocketService {
       // Entrar na sala (room) da partida
       socket.join(`game_${gameId}`);
 
-      // Atualizar socketId do jogador
-      if (playerNumber === 1) {
-        game.player1.socketId = socket.id;
-        game.player1.connected = true;
-      } else {
-        game.player2.socketId = socket.id;
-        game.player2.connected = true;
-      }
+      // Atualizar socketId do jogador usando operação atômica
+      const updateField = playerNumber === 1 ? 'player1' : 'player2';
+      await Game.findByIdAndUpdate(gameId, {
+        [`${updateField}.socketId`]: socket.id,
+        [`${updateField}.connected`]: true
+      });
 
-      await game.save();
+      // Re-fetch o jogo para ter o estado mais recente de AMBOS os jogadores
+      const updatedGame = await Game.findById(gameId)
+        .populate('player1.userId', 'name avatar')
+        .populate('player2.userId', 'name avatar');
+
+      // Usar o jogo atualizado daqui para frente
+      game = updatedGame;
 
       // Armazenar informações do jogador conectado
       this.connectedPlayers.set(socket.id, {
@@ -178,11 +182,20 @@ class GameSocketService {
         playerNumber
       });
 
-      // Se ambos conectados e status 'playing', emitir game_start
-      if (game.status === 'playing' && game.player1.connected && game.player2.connected) {
+      // Se ambos conectados, mudar status para 'playing' e iniciar partida
+      if (game.player1.connected && game.player2.connected && game.status === 'waiting') {
+        game.status = 'playing';
+        await game.save();
+
+        // Re-popular novamente após o segundo save
+        await game.populate('player1.userId', 'name avatar');
+        await game.populate('player2.userId', 'name avatar');
+
         this.io.to(`game_${gameId}`).emit('game_start', {
           game
         });
+
+        console.log(`🎮 Partida ${gameId} iniciada!`);
       }
     } catch (error) {
       console.error('Erro ao entrar na partida:', error);
