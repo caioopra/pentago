@@ -2,6 +2,7 @@ const Game = require('../models/Game');
 const jwt = require('jsonwebtoken');
 const QueueService = require('./queueService');
 const ChatService = require('./chatService');
+const InactivityService = require('./inactivityService');
 const {
   validateAndPlacePiece,
   validateAndRotateQuadrant
@@ -16,12 +17,16 @@ class GameSocketService {
     this.connectedPlayers = new Map(); // socketId -> { userId, gameId }
     this.queueService = new QueueService(io);
     this.chatService = new ChatService(io);
+    this.inactivityService = new InactivityService(io);
   }
 
   /**
    * Inicializa os event handlers do Socket.io
    */
   initialize() {
+    // Iniciar monitoramento de inatividade
+    this.inactivityService.start();
+
     this.io.on('connection', (socket) => {
       console.log(`🔌 Cliente conectado: ${socket.id}`);
 
@@ -156,6 +161,9 @@ class GameSocketService {
         gameId: gameId
       });
 
+      // Iniciar rastreamento de inatividade
+      this.inactivityService.trackPlayer(gameId, socket.userId);
+
       console.log(`🎮 Jogador ${playerNumber} entrou na partida ${gameId}`);
 
       // Emitir estado atual da partida
@@ -194,6 +202,9 @@ class GameSocketService {
 
       const { gameId, quadrant, cell } = data;
 
+      // Atualizar atividade do jogador
+      this.inactivityService.updateActivity(gameId, socket.userId);
+
       // Validar e processar movimento
       const result = await validateAndPlacePiece(gameId, socket.userId, quadrant, cell);
 
@@ -229,6 +240,10 @@ class GameSocketService {
           game
         });
 
+        // Parar de rastrear ambos os jogadores
+        this.inactivityService.untrackPlayer(gameId, game.player1.userId._id.toString());
+        this.inactivityService.untrackPlayer(gameId, game.player2.userId._id.toString());
+
         console.log(`🏁 Partida ${gameId} finalizada`);
       }
     } catch (error) {
@@ -248,6 +263,9 @@ class GameSocketService {
       }
 
       const { gameId, quadrant, direction } = data;
+
+      // Atualizar atividade do jogador
+      this.inactivityService.updateActivity(gameId, socket.userId);
 
       // Validar e processar rotação
       const result = await validateAndRotateQuadrant(gameId, socket.userId, quadrant, direction);
@@ -284,6 +302,10 @@ class GameSocketService {
           game
         });
 
+        // Parar de rastrear ambos os jogadores
+        this.inactivityService.untrackPlayer(gameId, game.player1.userId._id.toString());
+        this.inactivityService.untrackPlayer(gameId, game.player2.userId._id.toString());
+
         console.log(`🏁 Partida ${gameId} finalizada`);
       }
     } catch (error) {
@@ -301,7 +323,7 @@ class GameSocketService {
 
       if (!playerInfo) return;
 
-      const { gameId } = playerInfo;
+      const { gameId, userId } = playerInfo;
 
       const game = await Game.findById(gameId);
 
@@ -315,6 +337,9 @@ class GameSocketService {
         }
 
         await game.save();
+
+        // Parar de rastrear jogador
+        this.inactivityService.untrackPlayer(gameId, userId);
 
         // Notificar oponente
         socket.to(`game_${gameId}`).emit('opponent_disconnected', {
@@ -361,6 +386,9 @@ class GameSocketService {
           }
 
           await game.save();
+
+          // Parar de rastrear jogador (timeout vai lidar com a desconexão)
+          this.inactivityService.untrackPlayer(gameId, userId);
 
           // Notificar oponente da desconexão
           socket.to(`game_${gameId}`).emit('opponent_disconnected', {

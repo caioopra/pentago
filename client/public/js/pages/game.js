@@ -117,6 +117,18 @@ class PentagoGameClient {
       this.showMessage('Oponente desconectou. Aguardando reconexão...', 'warning');
     });
 
+    // Evento: Timeout de jogador por inatividade
+    this.socket.on('player_timeout', (data) => {
+      console.log('⏱️ Timeout de jogador:', data);
+      this.showMessage(data.message, 'warning');
+
+      // Atualizar UI para mostrar fim de jogo
+      setTimeout(() => {
+        this.showMessage(`${data.winner.username} venceu por W.O. (inatividade do oponente)!`, 'success');
+        this.disableGameControls();
+      }, 2000);
+    });
+
     // Evento: Peça colocada
     this.socket.on('piece_placed', (data) => {
       console.log('📍 Peça colocada:', data);
@@ -782,6 +794,25 @@ class PentagoGameClient {
     }
 
     this.showChat();
+  }
+
+  /**
+   * Desabilitar controles do jogo (quando jogo acabar)
+   */
+  disableGameControls() {
+    // Desabilitar cliques nas células
+    const cells = document.querySelectorAll('.cell');
+    cells.forEach(cell => {
+      cell.style.pointerEvents = 'none';
+      cell.style.opacity = '0.6';
+    });
+
+    // Desabilitar botões de rotação
+    const rotateButtons = document.querySelectorAll('.rotate-button');
+    rotateButtons.forEach(btn => {
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+    });
   }
 }
 
