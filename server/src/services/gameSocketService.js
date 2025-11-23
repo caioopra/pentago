@@ -1,5 +1,7 @@
 const Game = require('../models/Game');
 const jwt = require('jsonwebtoken');
+const QueueService = require('./queueService');
+const ChatService = require('./chatService');
 const {
   validateAndPlacePiece,
   validateAndRotateQuadrant
@@ -12,6 +14,8 @@ class GameSocketService {
   constructor(io) {
     this.io = io;
     this.connectedPlayers = new Map(); // socketId -> { userId, gameId }
+    this.queueService = new QueueService(io);
+    this.chatService = new ChatService(io);
   }
 
   /**
@@ -55,6 +59,45 @@ class GameSocketService {
       // Sair da partida
       socket.on('leave_game', async () => {
         await this.handleLeaveGame(socket);
+      });
+
+      // === EVENTOS DA FILA ===
+
+      // Entrar na fila
+      socket.on('join_queue', async () => {
+        await this.handleJoinQueue(socket);
+      });
+
+      // Sair da fila
+      socket.on('leave_queue', () => {
+        this.handleLeaveQueue(socket);
+      });
+
+      // Obter informações da fila
+      socket.on('get_queue_info', () => {
+        socket.emit('queue_info', this.queueService.getQueueInfo());
+      });
+
+      // === EVENTOS DE CHAT ===
+
+      // Enviar mensagem
+      socket.on('send_message', async (data) => {
+        await this.handleSendMessage(socket, data);
+      });
+
+      // Buscar histórico de mensagens
+      socket.on('get_messages', async (data) => {
+        await this.handleGetMessages(socket, data);
+      });
+
+      // Usuário está digitando
+      socket.on('typing', (data) => {
+        this.handleTyping(socket, data);
+      });
+
+      // Usuário parou de digitar
+      socket.on('stop_typing', () => {
+        this.chatService.stopTyping(socket.id);
       });
 
       // Desconexão
@@ -294,6 +337,12 @@ class GameSocketService {
   async handleDisconnect(socket) {
     console.log(`🔌 Cliente desconectado: ${socket.id}`);
 
+    // Remover da fila se estiver nela
+    this.queueService.removeBySocketId(socket.id);
+
+    // Limpar typing
+    this.chatService.handleDisconnect(socket.id);
+
     const playerInfo = this.connectedPlayers.get(socket.id);
 
     if (playerInfo) {
@@ -326,6 +375,106 @@ class GameSocketService {
 
       this.connectedPlayers.delete(socket.id);
     }
+  }
+
+  /**
+   * Handler: Entrar na fila
+   */
+  async handleJoinQueue(socket) {
+    if (!socket.userId) {
+      socket.emit('error', { message: 'Você precisa estar autenticado.' });
+      return;
+    }
+
+    const result = await this.queueService.addToQueue(socket.userId, socket.id);
+
+    if (result.success) {
+      socket.emit('queue_joined', {
+        success: true,
+        message: result.message,
+        position: result.position,
+        queueSize: result.queueSize
+      });
+    } else {
+      socket.emit('queue_error', {
+        success: false,
+        message: result.message,
+        gameId: result.gameId // Se já está em partida
+      });
+    }
+  }
+
+  /**
+   * Handler: Sair da fila
+   */
+  handleLeaveQueue(socket) {
+    if (!socket.userId) {
+      socket.emit('error', { message: 'Você precisa estar autenticado.' });
+      return;
+    }
+
+    const result = this.queueService.removeFromQueue(socket.userId);
+    socket.emit('queue_left', result);
+  }
+
+  /**
+   * Obter serviço de fila (para uso externo se necessário)
+   */
+  getQueueService() {
+    return this.queueService;
+  }
+
+  /**
+   * Handler: Enviar mensagem
+   */
+  async handleSendMessage(socket, data) {
+    if (!socket.userId) {
+      socket.emit('error', { message: 'Você precisa estar autenticado.' });
+      return;
+    }
+
+    const { content, channel, gameId } = data;
+
+    const result = await this.chatService.sendMessage(
+      socket.userId,
+      content,
+      channel,
+      gameId
+    );
+
+    if (!result.success) {
+      socket.emit('chat_error', { message: result.message });
+    }
+    // Se sucesso, a mensagem já foi broadcast pelo chatService
+  }
+
+  /**
+   * Handler: Buscar histórico de mensagens
+   */
+  async handleGetMessages(socket, data) {
+    const { channel, gameId, limit } = data;
+
+    const messages = await this.chatService.getMessages(
+      channel,
+      gameId,
+      limit || 50
+    );
+
+    socket.emit('messages_history', {
+      channel,
+      gameId,
+      messages
+    });
+  }
+
+  /**
+   * Handler: Usuário digitando
+   */
+  handleTyping(socket, data) {
+    if (!socket.userId) return;
+
+    const { channel, gameId } = data;
+    this.chatService.setTyping(socket.id, socket.userId, channel, gameId);
   }
 }
 
