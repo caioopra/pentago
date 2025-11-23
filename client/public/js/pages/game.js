@@ -100,6 +100,7 @@ class PentagoGameClient {
       this.showMessage('A partida começou! Boa sorte!', 'success');
       setTimeout(() => this.hideMessage(), 3000);
       this.updateUI();
+      this.enableChat();
     });
 
     // Evento: Oponente conectou
@@ -164,51 +165,114 @@ class PentagoGameClient {
       this.connected = false;
       this.showMessage('Desconectado do servidor. Tentando reconectar...', 'warning');
     });
+
+    // === EVENTOS DA FILA ===
+
+    // Entrou na fila
+    this.socket.on('queue_joined', (data) => {
+      console.log('📋 Entrou na fila:', data);
+      this.showMessage(`Você está na fila (posição ${data.position}/${data.queueSize}). Aguardando oponente...`, 'info');
+      this.updateQueueUI();
+    });
+
+    // Fila atualizada
+    this.socket.on('queue_updated', (data) => {
+      console.log('📋 Fila atualizada:', data);
+      this.updateQueueDisplay(data);
+    });
+
+    // Match encontrado
+    this.socket.on('match_found', (data) => {
+      console.log('🎯 Match encontrado!', data);
+      this.gameId = data.gameId;
+      this.playerNumber = data.playerNumber;
+      this.showMessage(data.message, 'success');
+
+      // Entrar na partida
+      this.socket.emit('join_game', { gameId: this.gameId });
+    });
+
+    // Erro na fila
+    this.socket.on('queue_error', (data) => {
+      console.error('❌ Erro na fila:', data.message);
+
+      // Se já está em partida, reconectar
+      if (data.gameId) {
+        this.gameId = data.gameId;
+        this.showMessage('Reconectando à sua partida...', 'info');
+        this.socket.emit('join_game', { gameId: this.gameId });
+      } else {
+        this.showMessage(data.message, 'error');
+      }
+    });
+
+    // Saiu da fila
+    this.socket.on('queue_left', (data) => {
+      console.log('👋 Saiu da fila');
+      if (data.success) {
+        this.showMessage('Você saiu da fila.', 'info');
+      }
+    });
+
+    // === EVENTOS DE CHAT ===
+
+    // Nova mensagem recebida
+    this.socket.on('chat_message', (message) => {
+      this.addMessageToChat(message);
+    });
+
+    // Histórico de mensagens
+    this.socket.on('messages_history', (data) => {
+      this.loadMessagesHistory(data.messages);
+    });
+
+    // Erro no chat
+    this.socket.on('chat_error', (data) => {
+      console.error('❌ Erro no chat:', data.message);
+    });
+
+    // Usuário digitando
+    this.socket.on('user_typing', (data) => {
+      this.showTypingIndicator(data.userId);
+    });
+
+    // Usuário parou de digitar
+    this.socket.on('user_stopped_typing', (data) => {
+      this.hideTypingIndicator(data.userId);
+    });
   }
 
   /**
-   * Encontrar ou criar partida
+   * Entrar na fila de matchmaking
    */
   async findOrCreateGame() {
     try {
-      const token = AuthManager.getToken();
-
-      const response = await fetch('/api/games/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await response.json();
-
-      if (!data.success) {
-        if (data.gameId) {
-          // Usuário já está em uma partida
-          this.gameId = data.gameId;
-          this.showMessage('Reconectando à sua partida...', 'info');
-        } else {
-          this.showMessage(data.message, 'error');
-          return;
-        }
-      } else {
-        this.gameId = data.game._id;
-        this.playerNumber = data.playerNumber;
-        this.game = data.game;
-
-        if (data.message.includes('Aguardando')) {
-          this.showMessage(data.message, 'info');
-        } else {
-          this.showMessage(data.message, 'success');
-        }
+      // Aguardar socket estar conectado e autenticado
+      let attempts = 0;
+      while (!this.connected && attempts < 50) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
       }
 
-      // Entrar na partida via Socket.io
-      this.socket.emit('join_game', { gameId: this.gameId });
+      if (!this.connected) {
+        this.showMessage('Erro ao conectar ao servidor.', 'error');
+        return;
+      }
+
+      // Aguardar mais um pouco para garantir autenticação
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Mostrar interface da fila
+      this.showQueueSidebar();
+
+      // Entrar na fila
+      this.socket.emit('join_queue');
+
+      // Solicitar informações da fila
+      this.socket.emit('get_queue_info');
     } catch (error) {
-      console.error('Erro ao criar/entrar em partida:', error);
-      this.showMessage('Erro ao conectar à partida.', 'error');
+      console.error('Erro ao entrar na fila:', error);
+      this.showMessage('Erro ao entrar na fila.', 'error');
     }
   }
 
@@ -232,6 +296,52 @@ class PentagoGameClient {
         this.leaveGame();
         window.location.reload();
       }
+    });
+
+    // Chat
+    this.initializeChatListeners();
+  }
+
+  /**
+   * Inicializar listeners do chat
+   */
+  initializeChatListeners() {
+    const chatInput = document.getElementById('chatInput');
+    const chatSend = document.getElementById('chatSend');
+
+    if (!chatInput || !chatSend) return;
+
+    // Enviar mensagem ao clicar no botão
+    chatSend.addEventListener('click', () => {
+      this.sendChatMessage();
+    });
+
+    // Enviar mensagem ao pressionar Enter
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this.sendChatMessage();
+      }
+    });
+
+    // Indicador de digitação
+    let typingTimeout;
+    chatInput.addEventListener('input', () => {
+      // Emitir "typing"
+      if (this.connected && this.gameId) {
+        this.socket.emit('typing', {
+          channel: 'game',
+          gameId: this.gameId
+        });
+      }
+
+      // Parar de digitar após 1 segundo sem input
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => {
+        if (this.connected) {
+          this.socket.emit('stop_typing');
+        }
+      }, 1000);
     });
   }
 
@@ -483,6 +593,195 @@ class PentagoGameClient {
    */
   hideMessage() {
     document.getElementById('gameMessage').classList.add('hidden');
+  }
+
+  /**
+   * Mostrar sidebar da fila
+   */
+  showQueueSidebar() {
+    const sidebar = document.querySelector('.sidebar-right');
+    if (sidebar) {
+      sidebar.style.display = 'block';
+    }
+  }
+
+  /**
+   * Esconder sidebar da fila
+   */
+  hideQueueSidebar() {
+    const sidebar = document.querySelector('.sidebar-right');
+    if (sidebar) {
+      sidebar.style.display = 'none';
+    }
+  }
+
+  /**
+   * Atualizar UI da fila
+   */
+  updateQueueUI() {
+    this.showQueueSidebar();
+  }
+
+  /**
+   * Atualizar display da fila
+   */
+  updateQueueDisplay(queueData) {
+    const queueList = document.getElementById('queueList');
+    const queueCount = document.getElementById('queueCount');
+
+    if (!queueList || !queueCount) return;
+
+    // Atualizar contador
+    queueCount.textContent = `${queueData.size}/${queueData.maxSize}`;
+
+    // Limpar lista
+    queueList.innerHTML = '';
+
+    if (queueData.players.length === 0) {
+      queueList.innerHTML = '<p class="queue-empty">Nenhum jogador na fila</p>';
+      return;
+    }
+
+    // Adicionar jogadores
+    queueData.players.forEach((player, index) => {
+      const playerEl = document.createElement('div');
+      playerEl.className = 'queue-player';
+      playerEl.innerHTML = `
+        <div class="queue-player-avatar">
+          <img src="${player.avatar || '/assets/img/avatars/default.png'}" alt="${player.username}">
+        </div>
+        <div class="queue-player-info">
+          <div class="queue-player-name">${player.username}</div>
+          <div class="queue-player-stats">
+            <span class="queue-player-score">⭐ ${player.score || 0}</span>
+            <span class="queue-player-wait">⏱️ ${player.waitingTime}s</span>
+          </div>
+        </div>
+      `;
+      queueList.appendChild(playerEl);
+    });
+  }
+
+  /**
+   * Enviar mensagem do chat
+   */
+  sendChatMessage() {
+    const chatInput = document.getElementById('chatInput');
+    if (!chatInput) return;
+
+    const message = chatInput.value.trim();
+    if (!message) return;
+
+    if (!this.connected) {
+      console.error('Socket não conectado');
+      return;
+    }
+
+    // Enviar mensagem
+    this.socket.emit('send_message', {
+      content: message,
+      channel: 'game',
+      gameId: this.gameId
+    });
+
+    // Limpar input
+    chatInput.value = '';
+  }
+
+  /**
+   * Adicionar mensagem ao chat
+   */
+  addMessageToChat(message) {
+    const chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) return;
+
+    const currentUser = AuthManager.getUser();
+    const isOwnMessage = currentUser && message.sender._id === currentUser._id;
+
+    const messageEl = document.createElement('div');
+    messageEl.className = `chat-message ${isOwnMessage ? 'own-message' : ''}`;
+
+    const time = new Date(message.createdAt).toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    messageEl.innerHTML = `
+      <div class="message-header">
+        <img src="${message.sender.avatar || '/assets/img/avatars/default.png'}"
+             alt="${message.sender.name}"
+             class="message-avatar">
+        <span class="message-sender">${message.sender.name}</span>
+        <span class="message-time">${time}</span>
+      </div>
+      <div class="message-content">${message.content}</div>
+    `;
+
+    chatMessages.appendChild(messageEl);
+
+    // Auto-scroll para última mensagem
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    // Mostrar chat se estiver escondido
+    this.showChat();
+  }
+
+  /**
+   * Carregar histórico de mensagens
+   */
+  loadMessagesHistory(messages) {
+    const chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) return;
+
+    chatMessages.innerHTML = '';
+    messages.forEach(message => this.addMessageToChat(message));
+  }
+
+  /**
+   * Mostrar indicador de digitação
+   */
+  showTypingIndicator(userId) {
+    // Implementação simples - pode ser expandida
+    console.log(`Usuário ${userId} está digitando...`);
+  }
+
+  /**
+   * Esconder indicador de digitação
+   */
+  hideTypingIndicator(userId) {
+    console.log(`Usuário ${userId} parou de digitar`);
+  }
+
+  /**
+   * Mostrar chat
+   */
+  showChat() {
+    const chatCard = document.querySelector('.chat-card');
+    if (chatCard) {
+      chatCard.style.display = 'block';
+    }
+  }
+
+  /**
+   * Habilitar chat quando partida começar
+   */
+  enableChat() {
+    const chatInput = document.getElementById('chatInput');
+    const chatSend = document.getElementById('chatSend');
+
+    if (chatInput) chatInput.disabled = false;
+    if (chatSend) chatSend.disabled = false;
+
+    // Buscar histórico
+    if (this.gameId && this.connected) {
+      this.socket.emit('get_messages', {
+        channel: 'game',
+        gameId: this.gameId,
+        limit: 50
+      });
+    }
+
+    this.showChat();
   }
 }
 
