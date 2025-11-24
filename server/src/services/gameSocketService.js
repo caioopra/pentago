@@ -191,9 +191,13 @@ class GameSocketService {
         await game.populate('player1.userId', 'name avatar');
         await game.populate('player2.userId', 'name avatar');
 
-        this.io.to(`game_${gameId}`).emit('game_start', {
-          game
-        });
+        const gameStartData = { game, gameId };
+
+        // Enviar para jogadores
+        this.io.to(`game_${gameId}`).emit('game_start', gameStartData);
+
+        // Enviar para espectadores
+        this.io.emit('spectator_game_start', gameStartData);
 
         console.log(`🎮 Partida ${gameId} iniciada!`);
       }
@@ -232,8 +236,9 @@ class GameSocketService {
         .populate('player2.userId', 'name avatar')
         .populate('winner', 'name avatar');
 
-      // Broadcast do movimento para todos na sala
-      this.io.to(`game_${gameId}`).emit('piece_placed', {
+      // Broadcast do movimento para todos na sala E para espectadores
+      const moveData = {
+        gameId,
         quadrant,
         cell,
         player: game.getPlayerNumber(socket.userId),
@@ -243,15 +248,28 @@ class GameSocketService {
           gamePhase: game.gamePhase,
           status: game.status
         }
-      });
+      };
+
+      // Enviar para jogadores na sala
+      this.io.to(`game_${gameId}`).emit('piece_placed', moveData);
+
+      // Enviar para espectadores (todos os outros clientes conectados)
+      this.io.emit('spectator_piece_placed', moveData);
 
       // Se houver vitória ou empate
       if (result.winCheck) {
-        this.io.to(`game_${gameId}`).emit('game_over', {
+        const gameOverData = {
+          gameId,
           winner: result.winCheck.winner || null,
           draw: result.winCheck.draw || false,
           game
-        });
+        };
+
+        // Enviar para jogadores
+        this.io.to(`game_${gameId}`).emit('game_over', gameOverData);
+
+        // Enviar para espectadores
+        this.io.emit('spectator_game_over', gameOverData);
 
         // Parar de rastrear ambos os jogadores
         this.inactivityService.untrackPlayer(gameId, game.player1.userId._id.toString());
@@ -294,8 +312,9 @@ class GameSocketService {
         .populate('player2.userId', 'name avatar')
         .populate('winner', 'name avatar');
 
-      // Broadcast da rotação para todos na sala
-      this.io.to(`game_${gameId}`).emit('quadrant_rotated', {
+      // Broadcast da rotação para todos na sala E para espectadores
+      const rotationData = {
+        gameId,
         quadrant,
         direction,
         player: game.getPlayerNumber(socket.userId),
@@ -305,15 +324,28 @@ class GameSocketService {
           gamePhase: game.gamePhase,
           status: game.status
         }
-      });
+      };
+
+      // Enviar para jogadores na sala
+      this.io.to(`game_${gameId}`).emit('quadrant_rotated', rotationData);
+
+      // Enviar para espectadores (todos os outros clientes conectados)
+      this.io.emit('spectator_quadrant_rotated', rotationData);
 
       // Se houver vitória ou empate
       if (result.winCheck) {
-        this.io.to(`game_${gameId}`).emit('game_over', {
+        const gameOverData = {
+          gameId,
           winner: result.winCheck.winner || null,
           draw: result.winCheck.draw || false,
           game
-        });
+        };
+
+        // Enviar para jogadores
+        this.io.to(`game_${gameId}`).emit('game_over', gameOverData);
+
+        // Enviar para espectadores
+        this.io.emit('spectator_game_over', gameOverData);
 
         // Parar de rastrear ambos os jogadores
         this.inactivityService.untrackPlayer(gameId, game.player1.userId._id.toString());
@@ -462,6 +494,27 @@ class GameSocketService {
         position: result.position,
         queueSize: result.queueSize
       });
+
+      // Enviar estado do jogo atual se houver uma partida em andamento
+      try {
+        const activeGame = await Game.findOne({
+          status: { $in: ['waiting', 'playing'] }
+        })
+          .populate('player1.userId', 'name avatar')
+          .populate('player2.userId', 'name avatar')
+          .populate('winner', 'name avatar')
+          .sort({ createdAt: -1 })
+          .limit(1);
+
+        if (activeGame) {
+          socket.emit('spectator_game_start', {
+            game: activeGame,
+            gameId: activeGame._id
+          });
+        }
+      } catch (error) {
+        console.error('Erro ao buscar partida ativa para espectador:', error);
+      }
     } else {
       socket.emit('queue_error', {
         success: false,

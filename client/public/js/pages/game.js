@@ -197,6 +197,68 @@ class PentagoGameClient {
       this.showMessage('Desconectado do servidor. Tentando reconectar...', 'warning');
     });
 
+    // === EVENTOS DE ESPECTADOR (para jogadores na fila) ===
+
+    // Partida iniciada (espectador)
+    this.socket.on('spectator_game_start', (data) => {
+      console.log('👁️ Espectador: Partida iniciada', data);
+      // Se não está jogando, exibir o jogo como espectador
+      if (!this.gameId || this.gameId !== data.gameId) {
+        this.game = data.game;
+        this.updateUI();
+        this.showMessage('Uma nova partida começou! Assista enquanto espera.', 'info');
+        setTimeout(() => this.hideMessage(), 3000);
+      }
+    });
+
+    // Peça colocada (espectador)
+    this.socket.on('spectator_piece_placed', (data) => {
+      // Se não está jogando nesta partida, atualizar como espectador
+      if (!this.gameId || this.gameId !== data.gameId) {
+        if (!this.game) this.game = {};
+        this.game.boardState = data.gameState.boardState;
+        this.game.currentTurn = data.gameState.currentTurn;
+        this.game.gamePhase = data.gameState.gamePhase;
+        this.game.status = data.gameState.status;
+        this.updateUI();
+      }
+    });
+
+    // Quadrante rotacionado (espectador)
+    this.socket.on('spectator_quadrant_rotated', (data) => {
+      // Se não está jogando nesta partida, atualizar como espectador
+      if (!this.gameId || this.gameId !== data.gameId) {
+        if (!this.game) this.game = {};
+        this.game.boardState = data.gameState.boardState;
+        this.game.currentTurn = data.gameState.currentTurn;
+        this.game.gamePhase = data.gameState.gamePhase;
+        this.game.status = data.gameState.status;
+        this.updateUI();
+      }
+    });
+
+    // Fim de jogo (espectador)
+    this.socket.on('spectator_game_over', (data) => {
+      console.log('👁️ Espectador: Fim de jogo', data);
+      // Se não está jogando nesta partida, exibir resultado
+      if (!this.gameId || this.gameId !== data.gameId) {
+        this.game = data.game;
+        this.updateUI();
+
+        let message = '';
+        if (data.draw) {
+          message = 'A partida terminou em empate!';
+        } else if (data.winner) {
+          const winnerName = data.game.player1.userId._id === data.winner ?
+            data.game.player1.userId.name : data.game.player2.userId.name;
+          message = `${winnerName} venceu a partida!`;
+        }
+
+        this.showMessage(message, 'info');
+        setTimeout(() => this.hideMessage(), 5000);
+      }
+    });
+
     // === EVENTOS DA FILA ===
 
     // Entrou na fila
