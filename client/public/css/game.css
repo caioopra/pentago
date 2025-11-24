@@ -508,6 +508,55 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
+/* Notificação de turno */
+.turn-notification {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100px);
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 1.5rem 3rem;
+  border-radius: 16px;
+  font-size: 1.8rem;
+  font-weight: 700;
+  box-shadow:
+    0 20px 60px rgba(102, 126, 234, 0.5),
+    0 0 80px rgba(102, 126, 234, 0.3),
+    inset 0 2px 20px rgba(255, 255, 255, 0.2);
+  z-index: 1000;
+  text-align: center;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.turn-notification.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  animation: turn-pulse 0.6s ease-in-out;
+}
+
+@keyframes turn-pulse {
+  0%, 100% {
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+  50% {
+    transform: translateX(-50%) translateY(0) scale(1.1);
+  }
+}
+
+.turn-notification.your-turn {
+  background: linear-gradient(135deg, #48bb78, #38a169);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.turn-notification.opponent-turn {
+  background: linear-gradient(135deg, #ed8936, #dd6b20);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
 .btn-play-again:active {
   transform: scale(0.98);
 }
@@ -829,6 +878,11 @@
     padding: 1rem 1.5rem;
   }
 
+  .turn-notification {
+    font-size: 1.5rem;
+    padding: 1.2rem 2.5rem;
+  }
+
   .player-badge,
   .phase-badge {
     font-size: 0.9rem;
@@ -891,6 +945,12 @@
   .game-message {
     font-size: 1rem;
     padding: 0.75rem 1rem;
+  }
+
+  .turn-notification {
+    font-size: 1.2rem;
+    padding: 1rem 2rem;
+    max-width: 85%;
   }
 
   .difficulty-selector {

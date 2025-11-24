@@ -77,6 +77,33 @@ const checkWinCondition = (board) => {
 };
 
 /**
+ * Utilitário: Atualizar pontuações dos jogadores após o jogo
+ */
+const updatePlayerScores = async (game) => {
+  try {
+    const player1Id = game.player1.userId._id || game.player1.userId;
+    const player2Id = game.player2.userId._id || game.player2.userId;
+
+    if (game.result === 'draw') {
+      // Empate: +1 ponto para ambos
+      await User.findByIdAndUpdate(player1Id, { $inc: { score: 1 } });
+      await User.findByIdAndUpdate(player2Id, { $inc: { score: 1 } });
+      console.log(`📊 Empate - Ambos jogadores receberam +1 ponto`);
+    } else if (game.result === 'player1_win') {
+      // Jogador 1 venceu: +3 pontos
+      await User.findByIdAndUpdate(player1Id, { $inc: { score: 3 } });
+      console.log(`📊 Jogador 1 venceu e recebeu +3 pontos`);
+    } else if (game.result === 'player2_win') {
+      // Jogador 2 venceu: +3 pontos
+      await User.findByIdAndUpdate(player2Id, { $inc: { score: 3 } });
+      console.log(`📊 Jogador 2 venceu e recebeu +3 pontos`);
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar pontuações:', error);
+  }
+};
+
+/**
  * @desc    Criar nova partida ou entrar na fila
  * @route   POST /api/games/create
  * @access  Private
@@ -336,6 +363,9 @@ exports.abandonGame = async (req, res) => {
 
     await game.save();
 
+    // Atualizar pontuações (oponente ganha por W.O.)
+    await updatePlayerScores(game);
+
     res.status(200).json({
       success: true,
       message: 'Você abandonou a partida.',
@@ -404,9 +434,15 @@ exports.validateAndPlacePiece = async (gameId, userId, quadrant, cell) => {
         game.status = 'finished';
         game.result = `player${winCheck.winner}_win`;
         game.winner = winCheck.winner === 1 ? game.player1.userId : game.player2.userId;
+
+        // Atualizar pontuações
+        await updatePlayerScores(game);
       } else if (winCheck.draw) {
         game.status = 'finished';
         game.result = 'draw';
+
+        // Atualizar pontuações (empate)
+        await updatePlayerScores(game);
       }
     }
 
@@ -500,9 +536,15 @@ exports.validateAndRotateQuadrant = async (gameId, userId, quadrant, direction) 
         game.status = 'finished';
         game.result = `player${winCheck.winner}_win`;
         game.winner = winCheck.winner === 1 ? game.player1.userId : game.player2.userId;
+
+        // Atualizar pontuações
+        await updatePlayerScores(game);
       } else if (winCheck.draw) {
         game.status = 'finished';
         game.result = 'draw';
+
+        // Atualizar pontuações (empate)
+        await updatePlayerScores(game);
       }
     } else {
       // Trocar turno apenas se não houver vitória

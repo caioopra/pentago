@@ -360,6 +360,19 @@ class GameSocketService {
         });
 
         console.log(`👋 Jogador ${playerNumber} saiu da partida ${gameId}`);
+
+        // Verificar se ambos jogadores saíram
+        if (!game.player1.connected && !game.player2.connected) {
+          console.log(`🗑️ Ambos jogadores saíram da partida ${gameId} - deletando partida`);
+
+          // Deletar a partida da base de dados
+          await Game.findByIdAndDelete(gameId);
+
+          // Notificar a sala
+          this.io.to(`game_${gameId}`).emit('game_deleted', {
+            message: 'A partida foi encerrada pois ambos os jogadores saíram.'
+          });
+        }
       }
 
       socket.leave(`game_${gameId}`);
@@ -409,6 +422,19 @@ class GameSocketService {
           });
 
           console.log(`⚠️ Jogador ${playerNumber} desconectou da partida ${gameId}`);
+
+          // Verificar se ambos jogadores estão desconectados
+          if (!game.player1.connected && !game.player2.connected) {
+            console.log(`🗑️ Ambos jogadores desconectaram da partida ${gameId} - deletando partida`);
+
+            // Deletar a partida da base de dados
+            await Game.findByIdAndDelete(gameId);
+
+            // Notificar a sala (caso alguém ainda esteja conectado)
+            this.io.to(`game_${gameId}`).emit('game_deleted', {
+              message: 'A partida foi encerrada pois ambos os jogadores saíram.'
+            });
+          }
         }
       } catch (error) {
         console.error('Erro ao processar desconexão:', error);

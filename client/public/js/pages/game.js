@@ -16,6 +16,7 @@ class PentagoGameClient {
 
     // Estado local temporário
     this.awaitingRotation = false;
+    this.previousTurn = null; // Para detectar mudanças de turno
 
     // Inicializar
     this.init();
@@ -162,6 +163,17 @@ class PentagoGameClient {
       console.log('🏁 Fim de jogo:', data);
       this.game = data.game;
       this.handleGameOver(data);
+    });
+
+    // Evento: Partida deletada (ambos jogadores saíram)
+    this.socket.on('game_deleted', (data) => {
+      console.log('🗑️ Partida deletada:', data.message);
+      this.showMessage(data.message, 'info');
+
+      // Redirecionar para a página inicial após 3 segundos
+      setTimeout(() => {
+        window.location.href = '/pages/index.html';
+      }, 3000);
     });
 
     // Evento: Erro
@@ -522,6 +534,45 @@ class PentagoGameClient {
     if (this.game.currentTurn === this.playerNumber) {
       gamePhaseDisplay.textContent += ' (Seu turno!)';
     }
+
+    // Mostrar notificação quando o turno mudar
+    this.showTurnNotification();
+  }
+
+  /**
+   * Mostrar notificação de turno
+   */
+  showTurnNotification() {
+    // Só mostra se o turno mudou e o jogo está em andamento
+    if (!this.game || this.game.status !== 'playing') {
+      return;
+    }
+
+    // Detectar mudança de turno
+    if (this.previousTurn !== null && this.previousTurn !== this.game.currentTurn) {
+      const notification = document.getElementById('turnNotification');
+      const isMyTurn = this.game.currentTurn === this.playerNumber;
+
+      // Configurar mensagem
+      if (isMyTurn) {
+        notification.textContent = '🎯 SUA VEZ!';
+        notification.className = 'turn-notification your-turn show';
+      } else {
+        const opponentName = this.game.currentTurn === 1
+          ? (this.game.player1.userId?.name || 'Oponente')
+          : (this.game.player2.userId?.name || 'Oponente');
+        notification.textContent = `⏳ Vez de ${opponentName}`;
+        notification.className = 'turn-notification opponent-turn show';
+      }
+
+      // Remover após 2 segundos
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 2000);
+    }
+
+    // Atualizar turno anterior
+    this.previousTurn = this.game.currentTurn;
   }
 
   /**

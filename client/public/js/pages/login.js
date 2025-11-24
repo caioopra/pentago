@@ -52,14 +52,14 @@ form.addEventListener('submit', async (e) => {
 
     if (response.success) {
       // Show success message
-      UIUtils.showSuccess('Login realizado com sucesso! Redirecionando para seu perfil...', 'message');
+      UIUtils.showSuccess('Login realizado com sucesso! Redirecionando...', 'message');
 
       // Scroll to top to show message
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // Redirect to profile page after 1.5 seconds
+      // Redirect to main page after 1.5 seconds
       setTimeout(() => {
-        window.location.href = '/pages/profile.html';
+        window.location.href = '/pages/index.html';
       }, 1500);
     } else {
       // Should not reach here, but just in case

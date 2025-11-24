@@ -26,6 +26,11 @@ class InactivityService {
       this.checkInactivity();
     }, 10000);
 
+    // Cleanup stale games every 5 minutes
+    this.cleanupInterval = setInterval(() => {
+      this.cleanupStaleGames();
+    }, 5 * 60 * 1000);
+
     console.log('InactivityService started');
   }
 
@@ -36,8 +41,12 @@ class InactivityService {
     if (this.checkInterval) {
       clearInterval(this.checkInterval);
       this.checkInterval = null;
-      console.log('InactivityService stopped');
     }
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
+    console.log('InactivityService stopped');
   }
 
   /**
@@ -104,64 +113,72 @@ class InactivityService {
       this.untrackPlayer(gameId, userId);
 
       // Find the game
-      const game = await Game.findById(gameId).populate('player1 player2');
+      const game = await Game.findById(gameId)
+        .populate('player1.userId', 'name')
+        .populate('player2.userId', 'name');
+
       if (!game) {
         console.log(`Game ${gameId} not found for timeout handling`);
         return;
       }
 
-      // Only handle timeouts for active games
-      if (game.status !== 'active') {
+      // Only handle timeouts for active games (waiting or playing)
+      if (!game.isActive()) {
         return;
       }
 
       // Determine which player timed out
-      const isPlayer1 = game.player1._id.toString() === userId;
-      const isPlayer2 = game.player2._id.toString() === userId;
+      const player1Id = game.player1.userId._id || game.player1.userId;
+      const player2Id = game.player2.userId._id || game.player2.userId;
+
+      const isPlayer1 = player1Id.toString() === userId;
+      const isPlayer2 = player2Id.toString() === userId;
 
       if (!isPlayer1 && !isPlayer2) {
         console.log(`User ${userId} is not a player in game ${gameId}`);
         return;
       }
 
-      // Determine winner (the opponent)
-      const winner = isPlayer1 ? game.player2._id : game.player1._id;
-      const timedOutPlayer = isPlayer1 ? game.player1 : game.player2;
+      // Determine winner (the opponent) and loser
+      const winnerId = isPlayer1 ? player2Id : player1Id;
+      const loserId = isPlayer1 ? player1Id : player2Id;
+      const timedOutPlayerName = isPlayer1
+        ? (game.player1.userId.name || 'Jogador 1')
+        : (game.player2.userId.name || 'Jogador 2');
+      const winnerName = isPlayer1
+        ? (game.player2.userId.name || 'Jogador 2')
+        : (game.player1.userId.name || 'Jogador 1');
 
       // Update game status
       game.status = 'finished';
-      game.winner = winner;
-      game.endedAt = new Date();
+      game.winner = winnerId;
+      game.result = isPlayer1 ? 'player2_win' : 'player1_win';
       await game.save();
 
-      // Update user stats
+      // Update player scores (winner gets +3 points)
       const User = require('../models/User');
-      await User.findByIdAndUpdate(winner, {
-        $inc: { wins: 1, totalGames: 1 }
-      });
-      await User.findByIdAndUpdate(timedOutPlayer._id, {
-        $inc: { losses: 1, totalGames: 1 }
-      });
+      await User.findByIdAndUpdate(winnerId, { $inc: { score: 3 } });
+      console.log(`📊 ${winnerName} recebeu +3 pontos por vitória (timeout do oponente)`);
 
       // Notify both players via Socket.io
       this.io.to(`game_${gameId}`).emit('player_timeout', {
         gameId,
         timedOutPlayer: {
-          id: timedOutPlayer._id,
-          username: timedOutPlayer.username
+          id: loserId.toString(),
+          username: timedOutPlayerName
         },
         winner: {
-          id: winner,
-          username: isPlayer1 ? game.player2.username : game.player1.username
+          id: winnerId.toString(),
+          username: winnerName
         },
-        message: `${timedOutPlayer.username} foi desconectado por inatividade. ${isPlayer1 ? game.player2.username : game.player1.username} venceu!`
+        message: `${timedOutPlayerName} foi desconectado por inatividade. ${winnerName} venceu!`
       });
 
       // Remove both players from tracking since game ended
-      this.untrackPlayer(gameId, game.player1._id.toString());
-      this.untrackPlayer(gameId, game.player2._id.toString());
+      this.untrackPlayer(gameId, player1Id.toString());
+      this.untrackPlayer(gameId, player2Id.toString());
 
-      console.log(`Game ${gameId} ended due to timeout. Winner: ${winner}`);
+      console.log(`Game ${gameId} ended due to timeout. Winner: ${winnerName}`);
     } catch (error) {
       console.error('Error handling player timeout:', error);
     }
@@ -186,6 +203,38 @@ class InactivityService {
     const remainingMs = timeoutMs - timeSinceActivity;
 
     return Math.max(0, Math.floor(remainingMs / 1000));
+  }
+
+  /**
+   * Clean up stale games (waiting too long or both players disconnected)
+   */
+  async cleanupStaleGames() {
+    try {
+      const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+
+      // Delete games that:
+      // 1. Are in 'waiting' status and older than 15 minutes
+      // 2. Both players are disconnected
+      const result = await Game.deleteMany({
+        $or: [
+          {
+            status: 'waiting',
+            createdAt: { $lt: fifteenMinutesAgo }
+          },
+          {
+            status: { $in: ['waiting', 'playing'] },
+            'player1.connected': false,
+            'player2.connected': false
+          }
+        ]
+      });
+
+      if (result.deletedCount > 0) {
+        console.log(`🧹 Cleaned up ${result.deletedCount} stale game(s)`);
+      }
+    } catch (error) {
+      console.error('Error cleaning up stale games:', error);
+    }
   }
 }
 
