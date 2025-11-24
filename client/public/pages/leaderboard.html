@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Placar - Pentago Web</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/leaderboard.css">
+</head>
+
+<body>
+  <div class="container">
+    <header class="page-header">
+      <div class="header-content">
+        <h1>🏆 Placar de Líderes</h1>
+        <a href="/pages/index.html" class="btn-back">← Voltar</a>
+      </div>
+      <p class="subtitle">Veja os melhores jogadores e todas as pontuações</p>
+    </header>
+
+    <main class="leaderboard-main">
+      <!-- Loading State -->
+      <div class="loading-state" id="loadingState">
+        <div class="spinner"></div>
+        <p>Carregando placar...</p>
+      </div>
+
+      <!-- Error State -->
+      <div class="error-state" id="errorState" style="display: none;">
+        <p class="error-message" id="errorMessage">Erro ao carregar placar</p>
+        <button class="btn btn-primary" onclick="location.reload()">Tentar Novamente</button>
+      </div>
+
+      <!-- Top 3 Podium -->
+      <section class="podium-section" id="podiumSection" style="display: none;">
+        <h2 class="section-title">🥇 Top 3 Jogadores</h2>
+        <div class="podium">
+          <!-- 2nd Place -->
+          <div class="podium-place second-place" id="secondPlace">
+            <div class="podium-rank">2º</div>
+            <img src="/assets/img/avatars/default.png" alt="Avatar" class="podium-avatar">
+            <div class="podium-name">-</div>
+            <div class="podium-score">0 pts</div>
+          </div>
+
+          <!-- 1st Place -->
+          <div class="podium-place first-place" id="firstPlace">
+            <div class="podium-rank">🏆</div>
+            <img src="/assets/img/avatars/default.png" alt="Avatar" class="podium-avatar">
+            <div class="podium-name">-</div>
+            <div class="podium-score">0 pts</div>
+          </div>
+
+          <!-- 3rd Place -->
+          <div class="podium-place third-place" id="thirdPlace">
+            <div class="podium-rank">3º</div>
+            <img src="/assets/img/avatars/default.png" alt="Avatar" class="podium-avatar">
+            <div class="podium-name">-</div>
+            <div class="podium-score">0 pts</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- All Players Table -->
+      <section class="table-section" id="tableSection" style="display: none;">
+        <div class="section-header">
+          <h2 class="section-title">📊 Todos os Jogadores</h2>
+          <div class="stats">
+            <span class="stat-item">Total: <strong id="totalPlayers">0</strong> jogadores</span>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th class="col-rank">#</th>
+                <th class="col-avatar"></th>
+                <th class="col-name">Jogador</th>
+                <th class="col-score">Pontuação</th>
+                <th class="col-location">Localização</th>
+                <th class="col-age">Idade</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboardTableBody">
+              <!-- Rows will be populated by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer class="page-footer">
+      <p>&copy; 2025 Pentago Web - INE5646 UFSC</p>
+    </footer>
+  </div>
+
+  <script src="/js/utils/auth.js"></script>
+  <script src="/js/pages/leaderboard.js"></script>
+</body>
+
+</html>

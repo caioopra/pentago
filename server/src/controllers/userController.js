@@ -273,3 +273,46 @@ exports.getLeaderboard = async (req, res) => {
     });
   }
 };
+
+/**
+ * @desc    Get full leaderboard with all users
+ * @route   GET /api/users/leaderboard/full
+ * @access  Public
+ */
+exports.getFullLeaderboard = async (req, res) => {
+  try {
+    // Fetch all non-admin users sorted by score
+    const users = await User.find({ role: { $ne: 'admin' } })
+      .select('name email avatar score age city state country createdAt')
+      .sort({ score: -1, createdAt: 1 });
+
+    // Add rank to each user
+    const usersWithRank = users.map((user, index) => ({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      score: user.score,
+      age: user.age,
+      city: user.city,
+      state: user.state,
+      country: user.country,
+      createdAt: user.createdAt,
+      rank: index + 1
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        users: usersWithRank,
+        total: usersWithRank.length
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar placar completo:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao buscar placar.'
+    });
+  }
+};

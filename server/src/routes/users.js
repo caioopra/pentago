@@ -10,10 +10,12 @@ const {
   updateUser,
   updateAvatar,
   deleteUser,
-  getLeaderboard
+  getLeaderboard,
+  getFullLeaderboard
 } = require('../controllers/userController');
 
 // Public routes
+router.get('/leaderboard/full', getFullLeaderboard);
 router.get('/leaderboard', getLeaderboard);
 
 // Protected routes
