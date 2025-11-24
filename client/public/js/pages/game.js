@@ -204,6 +204,9 @@ class PentagoGameClient {
       console.log('📋 Entrou na fila:', data);
       this.showMessage(`Você está na fila (posição ${data.position}/${data.queueSize}). Aguardando oponente...`, 'info');
       this.updateQueueUI();
+
+      // Habilitar chat do lobby para jogadores na fila
+      this.enableLobbyChat();
     });
 
     // Fila atualizada
@@ -926,6 +929,40 @@ class PentagoGameClient {
   }
 
   /**
+   * Habilitar chat do lobby (para jogadores na fila)
+   */
+  enableLobbyChat() {
+    const chatInput = document.getElementById('chatInput');
+    const chatSend = document.getElementById('chatSend');
+
+    if (chatInput) chatInput.disabled = false;
+    if (chatSend) chatSend.disabled = false;
+
+    // Definir canal ativo como lobby
+    this.activeChannel = 'lobby';
+
+    // Atualizar UI dos botões de toggle
+    const toggleButtons = document.querySelectorAll('.chat-toggle-btn');
+    toggleButtons.forEach(btn => {
+      if (btn.dataset.channel === 'lobby') {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    // Buscar histórico do lobby
+    if (this.connected) {
+      this.socket.emit('get_messages', {
+        channel: 'lobby',
+        limit: 50
+      });
+    }
+
+    this.showChat();
+  }
+
+  /**
    * Habilitar chat quando partida começar
    */
   enableChat() {
@@ -934,6 +971,19 @@ class PentagoGameClient {
 
     if (chatInput) chatInput.disabled = false;
     if (chatSend) chatSend.disabled = false;
+
+    // Definir canal ativo como jogo quando partida começar
+    this.activeChannel = 'game';
+
+    // Atualizar UI dos botões de toggle
+    const toggleButtons = document.querySelectorAll('.chat-toggle-btn');
+    toggleButtons.forEach(btn => {
+      if (btn.dataset.channel === 'game') {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
 
     // Buscar histórico de ambos os canais
     if (this.connected) {
@@ -946,11 +996,13 @@ class PentagoGameClient {
         });
       }
 
-      // Canal do lobby
-      this.socket.emit('get_messages', {
-        channel: 'lobby',
-        limit: 50
-      });
+      // Canal do lobby (se ainda não carregado)
+      if (this.messages.lobby.length === 0) {
+        this.socket.emit('get_messages', {
+          channel: 'lobby',
+          limit: 50
+        });
+      }
     }
 
     this.showChat();
