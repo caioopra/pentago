@@ -18,6 +18,13 @@ class PentagoGameClient {
     this.awaitingRotation = false;
     this.previousTurn = null; // Para detectar mudanças de turno
 
+    // Chat - suporte para dois canais
+    this.activeChannel = 'game'; // Canal ativo ('game' ou 'lobby')
+    this.messages = {
+      game: [],
+      lobby: []
+    };
+
     // Inicializar
     this.init();
   }
@@ -351,12 +358,15 @@ class PentagoGameClient {
     // Indicador de digitação
     let typingTimeout;
     chatInput.addEventListener('input', () => {
-      // Emitir "typing"
-      if (this.connected && this.gameId) {
-        this.socket.emit('typing', {
-          channel: 'game',
-          gameId: this.gameId
-        });
+      // Emitir "typing" no canal ativo
+      if (this.connected) {
+        const typingData = {
+          channel: this.activeChannel
+        };
+        if (this.activeChannel === 'game' && this.gameId) {
+          typingData.gameId = this.gameId;
+        }
+        this.socket.emit('typing', typingData);
       }
 
       // Parar de digitar após 1 segundo sem input
@@ -366,6 +376,15 @@ class PentagoGameClient {
           this.socket.emit('stop_typing');
         }
       }, 1000);
+    });
+
+    // Toggle entre canais de chat
+    const toggleButtons = document.querySelectorAll('.chat-toggle-btn');
+    toggleButtons.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const channel = e.target.dataset.channel;
+        this.switchChatChannel(channel);
+      });
     });
   }
 
@@ -740,12 +759,18 @@ class PentagoGameClient {
       return;
     }
 
-    // Enviar mensagem
-    this.socket.emit('send_message', {
+    // Enviar mensagem no canal ativo
+    const messageData = {
       content: message,
-      channel: 'game',
-      gameId: this.gameId
-    });
+      channel: this.activeChannel
+    };
+
+    // Adicionar gameId apenas se for canal de jogo
+    if (this.activeChannel === 'game' && this.gameId) {
+      messageData.gameId = this.gameId;
+    }
+
+    this.socket.emit('send_message', messageData);
 
     // Limpar input
     chatInput.value = '';
@@ -755,6 +780,25 @@ class PentagoGameClient {
    * Adicionar mensagem ao chat
    */
   addMessageToChat(message) {
+    // Adicionar mensagem ao array do canal apropriado
+    const channel = message.channel || 'game';
+    if (this.messages[channel]) {
+      this.messages[channel].push(message);
+    }
+
+    // Se a mensagem for do canal ativo, renderizar
+    if (channel === this.activeChannel) {
+      this.renderMessage(message);
+    }
+
+    // Mostrar chat se estiver escondido
+    this.showChat();
+  }
+
+  /**
+   * Renderizar uma mensagem no chat
+   */
+  renderMessage(message) {
     const chatMessages = document.getElementById('chatMessages');
     if (!chatMessages) return;
 
@@ -784,20 +828,76 @@ class PentagoGameClient {
 
     // Auto-scroll para última mensagem
     chatMessages.scrollTop = chatMessages.scrollHeight;
-
-    // Mostrar chat se estiver escondido
-    this.showChat();
   }
 
   /**
    * Carregar histórico de mensagens
    */
-  loadMessagesHistory(messages) {
+  loadMessagesHistory(data) {
+    const { channel, messages } = data;
+
+    // Armazenar mensagens no canal apropriado
+    if (this.messages[channel]) {
+      this.messages[channel] = messages;
+    }
+
+    // Se for o canal ativo, renderizar as mensagens
+    if (channel === this.activeChannel) {
+      this.renderChannelMessages();
+    }
+  }
+
+  /**
+   * Renderizar todas as mensagens do canal ativo
+   */
+  renderChannelMessages() {
     const chatMessages = document.getElementById('chatMessages');
     if (!chatMessages) return;
 
+    // Limpar mensagens atuais
     chatMessages.innerHTML = '';
-    messages.forEach(message => this.addMessageToChat(message));
+
+    // Renderizar mensagens do canal ativo
+    const messages = this.messages[this.activeChannel] || [];
+    messages.forEach(message => this.renderMessage(message));
+  }
+
+  /**
+   * Alternar entre canais de chat
+   */
+  switchChatChannel(channel) {
+    if (channel === this.activeChannel) return;
+
+    // Atualizar canal ativo
+    this.activeChannel = channel;
+
+    // Atualizar UI dos botões
+    const toggleButtons = document.querySelectorAll('.chat-toggle-btn');
+    toggleButtons.forEach(btn => {
+      if (btn.dataset.channel === channel) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    // Renderizar mensagens do novo canal
+    this.renderChannelMessages();
+
+    // Carregar histórico se o canal estiver vazio
+    if (this.messages[channel].length === 0 && this.connected) {
+      const requestData = {
+        channel,
+        limit: 50
+      };
+
+      // Adicionar gameId se for canal de jogo
+      if (channel === 'game' && this.gameId) {
+        requestData.gameId = this.gameId;
+      }
+
+      this.socket.emit('get_messages', requestData);
+    }
   }
 
   /**
@@ -835,11 +935,20 @@ class PentagoGameClient {
     if (chatInput) chatInput.disabled = false;
     if (chatSend) chatSend.disabled = false;
 
-    // Buscar histórico
-    if (this.gameId && this.connected) {
+    // Buscar histórico de ambos os canais
+    if (this.connected) {
+      // Canal do jogo
+      if (this.gameId) {
+        this.socket.emit('get_messages', {
+          channel: 'game',
+          gameId: this.gameId,
+          limit: 50
+        });
+      }
+
+      // Canal do lobby
       this.socket.emit('get_messages', {
-        channel: 'game',
-        gameId: this.gameId,
+        channel: 'lobby',
         limit: 50
       });
     }

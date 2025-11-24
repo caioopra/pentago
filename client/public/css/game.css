@@ -1286,6 +1286,45 @@
   flex-direction: column;
 }
 
+.chat-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.chat-toggle-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.chat-toggle-btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-secondary, #f7fafc);
+  color: var(--text-primary, #2d3748);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chat-toggle-btn:hover {
+  background: var(--bg-color, white);
+  border-color: var(--accent-color, #4c51bf);
+}
+
+.chat-toggle-btn.active {
+  background: var(--accent-color, #4c51bf);
+  color: white;
+  border-color: var(--accent-color, #4c51bf);
+}
+
+.chat-toggle-btn.active:hover {
+  background: var(--accent-color-hover, #434190);
+}
+
 .chat-messages {
   flex: 1;
   overflow-y: auto;
