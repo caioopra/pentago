@@ -57,9 +57,14 @@
       <div class="card chat-card" style="display: none;">
         <div class="card-header">
           <h3 class="card-title">Chat</h3>
-          <div class="chat-toggle-buttons">
-            <button class="chat-toggle-btn active" data-channel="game">Jogo</button>
-            <button class="chat-toggle-btn" data-channel="lobby">Lobby</button>
+          <div class="chat-header-actions">
+            <div class="chat-toggle-buttons">
+              <button class="chat-toggle-btn active" data-channel="game">Jogo</button>
+              <button class="chat-toggle-btn" data-channel="lobby">Lobby</button>
+            </div>
+            <button id="openVideoChat" class="btn btn-secondary btn-video-chat" title="Abrir vídeo chat">
+              📹
+            </button>
           </div>
         </div>
         <div class="card-body">
@@ -68,7 +73,38 @@
           </div>
           <div class="chat-input-container">
             <input type="text" id="chatInput" placeholder="Digite sua mensagem..." disabled>
-            <button id="chatSend" class="btn btn-primary" disabled>Enviar</button>
+            <button id="chatSend" class="btn btn-primary" disabled>✉️</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vídeo Chat -->
+      <div class="card video-chat-card" id="videoChatCard" style="display: none;">
+        <div class="card-header">
+          <h3 class="card-title">Vídeo Chat</h3>
+          <div class="video-controls">
+            <button id="toggleVideo" class="video-control-btn" title="Ativar/Desativar câmera">
+              📹
+            </button>
+            <button id="toggleAudio" class="video-control-btn" title="Ativar/Desativar áudio">
+              🎤
+            </button>
+            <button id="toggleVideoChat" class="video-control-btn toggle-video-chat" title="Fechar vídeo chat">
+              ✕
+            </button>
+          </div>
+        </div>
+        <div class="card-body video-chat-body">
+          <div class="video-container">
+            <!-- Vídeo do oponente (principal) -->
+            <video id="remoteVideo" class="remote-video" autoplay playsinline></video>
+            <!-- Vídeo próprio (miniatura) -->
+            <video id="localVideo" class="local-video" autoplay muted playsinline></video>
+
+            <!-- Status de conexão -->
+            <div id="videoStatus" class="video-status">
+              <span class="status-text">Aguardando conexão...</span>
+            </div>
           </div>
         </div>
       </div>
@@ -213,6 +249,7 @@
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/utils/api.js"></script>
+  <script src="/js/utils/webrtc.js"></script>
   <script src="/js/pages/game.js"></script>
 </body>
 

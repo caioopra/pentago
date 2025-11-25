@@ -105,6 +105,23 @@ class GameSocketService {
         this.chatService.stopTyping(socket.id);
       });
 
+      // === EVENTOS DE WEBRTC (VIDEO CHAT) ===
+
+      // Oferta WebRTC
+      socket.on('webrtc_offer', (data) => {
+        this.handleWebRTCOffer(socket, data);
+      });
+
+      // Resposta WebRTC
+      socket.on('webrtc_answer', (data) => {
+        this.handleWebRTCAnswer(socket, data);
+      });
+
+      // Candidato ICE
+      socket.on('ice_candidate', (data) => {
+        this.handleICECandidate(socket, data);
+      });
+
       // Desconexão
       socket.on('disconnect', () => {
         this.handleDisconnect(socket);
@@ -595,6 +612,69 @@ class GameSocketService {
 
     const { channel, gameId } = data;
     this.chatService.setTyping(socket.id, socket.userId, channel, gameId);
+  }
+
+  /**
+   * Handler: Oferta WebRTC
+   * Repassa a oferta WebRTC para o outro jogador na sala
+   */
+  handleWebRTCOffer(socket, data) {
+    const { gameId, offer } = data;
+
+    if (!gameId || !offer) {
+      console.error('❌ WebRTC offer inválida');
+      return;
+    }
+
+    // Repassar para o outro jogador na sala (não para si mesmo)
+    socket.to(`game_${gameId}`).emit('webrtc_offer', {
+      offer,
+      from: socket.id
+    });
+
+    console.log(`📹 WebRTC offer enviada na partida ${gameId}`);
+  }
+
+  /**
+   * Handler: Resposta WebRTC
+   * Repassa a resposta WebRTC para o jogador que enviou a oferta
+   */
+  handleWebRTCAnswer(socket, data) {
+    const { gameId, answer } = data;
+
+    if (!gameId || !answer) {
+      console.error('❌ WebRTC answer inválida');
+      return;
+    }
+
+    // Repassar para o outro jogador na sala
+    socket.to(`game_${gameId}`).emit('webrtc_answer', {
+      answer,
+      from: socket.id
+    });
+
+    console.log(`📹 WebRTC answer enviada na partida ${gameId}`);
+  }
+
+  /**
+   * Handler: Candidato ICE
+   * Repassa o candidato ICE para o outro jogador
+   */
+  handleICECandidate(socket, data) {
+    const { gameId, candidate } = data;
+
+    if (!gameId || !candidate) {
+      console.error('❌ ICE candidate inválido');
+      return;
+    }
+
+    // Repassar para o outro jogador na sala
+    socket.to(`game_${gameId}`).emit('ice_candidate', {
+      candidate,
+      from: socket.id
+    });
+
+    console.log(`📹 ICE candidate enviado na partida ${gameId}`);
   }
 }
 

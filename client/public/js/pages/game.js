@@ -25,6 +25,10 @@ class PentagoGameClient {
       lobby: []
     };
 
+    // Vídeo Chat - WebRTC
+    this.webrtcManager = null;
+    this.videoChatOpen = false;
+
     // Inicializar
     this.init();
   }
@@ -109,6 +113,9 @@ class PentagoGameClient {
       setTimeout(() => this.hideMessage(), 3000);
       this.updateUI();
       this.enableChat();
+
+      // Inicializar WebRTC Manager para escutar ofertas
+      this.initializeWebRTCManager();
     });
 
     // Evento: Oponente conectou
@@ -396,6 +403,9 @@ class PentagoGameClient {
 
     // Chat
     this.initializeChatListeners();
+
+    // Vídeo Chat
+    this.initializeVideoChatListeners();
   }
 
   /**
@@ -720,6 +730,11 @@ class PentagoGameClient {
    * Sair da partida
    */
   leaveGame() {
+    // Fechar vídeo chat se estiver aberto
+    if (this.videoChatOpen) {
+      this.closeVideoChat();
+    }
+
     if (this.socket && this.connected) {
       this.socket.emit('leave_game');
     }
@@ -1087,6 +1102,179 @@ class PentagoGameClient {
       btn.disabled = true;
       btn.style.opacity = '0.5';
     });
+  }
+
+  /**
+   * Inicializar WebRTC Manager (chamado quando o jogo começa)
+   */
+  initializeWebRTCManager() {
+    if (this.webrtcManager || !this.gameId) return;
+
+    // Verificar suporte a WebRTC
+    if (!WebRTCManager.isSupported()) {
+      console.warn('⚠️ WebRTC não suportado neste navegador');
+      return;
+    }
+
+    // Criar WebRTC Manager
+    this.webrtcManager = new WebRTCManager(this.socket, this.gameId);
+
+    // Inicializar com elementos de vídeo
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const videoStatus = document.getElementById('videoStatus');
+
+    this.webrtcManager.initialize(localVideo, remoteVideo, videoStatus);
+
+    // Configurar callback para quando receber oferta
+    this.webrtcManager.onOfferReceived = () => {
+      // Mostrar card de vídeo chat automaticamente
+      const videoChatCard = document.getElementById('videoChatCard');
+      if (videoChatCard && !this.videoChatOpen) {
+        videoChatCard.style.display = 'block';
+        this.videoChatOpen = true;
+
+        // Atualizar botões
+        document.getElementById('toggleVideo').classList.add('active');
+        document.getElementById('toggleAudio').classList.add('active');
+
+        this.showMessage('Oponente iniciou vídeo chat!', 'info');
+        setTimeout(() => this.hideMessage(), 3000);
+      }
+    };
+
+    console.log('📹 WebRTC Manager inicializado');
+  }
+
+  /**
+   * Inicializar listeners do vídeo chat
+   */
+  initializeVideoChatListeners() {
+    const openVideoChatBtn = document.getElementById('openVideoChat');
+    const toggleVideoChatBtn = document.getElementById('toggleVideoChat');
+    const toggleVideoBtn = document.getElementById('toggleVideo');
+    const toggleAudioBtn = document.getElementById('toggleAudio');
+
+    if (!openVideoChatBtn) return;
+
+    // Verificar suporte a WebRTC
+    if (!WebRTCManager.isSupported()) {
+      openVideoChatBtn.disabled = true;
+      openVideoChatBtn.title = 'Seu navegador não suporta vídeo chat';
+      console.warn('⚠️ WebRTC não suportado neste navegador');
+      return;
+    }
+
+    // Abrir vídeo chat
+    openVideoChatBtn.addEventListener('click', () => {
+      this.openVideoChat();
+    });
+
+    // Fechar vídeo chat
+    if (toggleVideoChatBtn) {
+      toggleVideoChatBtn.addEventListener('click', () => {
+        this.closeVideoChat();
+      });
+    }
+
+    // Ativar/Desativar vídeo
+    if (toggleVideoBtn) {
+      toggleVideoBtn.addEventListener('click', () => {
+        if (this.webrtcManager) {
+          const isEnabled = this.webrtcManager.toggleVideo();
+          toggleVideoBtn.classList.toggle('active', isEnabled);
+          toggleVideoBtn.classList.toggle('inactive', !isEnabled);
+        }
+      });
+    }
+
+    // Ativar/Desativar áudio
+    if (toggleAudioBtn) {
+      toggleAudioBtn.addEventListener('click', () => {
+        if (this.webrtcManager) {
+          const isEnabled = this.webrtcManager.toggleAudio();
+          toggleAudioBtn.classList.toggle('active', isEnabled);
+          toggleAudioBtn.classList.toggle('inactive', !isEnabled);
+        }
+      });
+    }
+  }
+
+  /**
+   * Abrir vídeo chat
+   */
+  async openVideoChat() {
+    if (this.videoChatOpen) return;
+
+    // Verificar se está em uma partida
+    if (!this.gameId) {
+      alert('Você precisa estar em uma partida para usar o vídeo chat.');
+      return;
+    }
+
+    // Verificar se o jogo está em andamento
+    if (!this.game || this.game.status !== 'playing') {
+      alert('O vídeo chat só está disponível durante a partida.');
+      return;
+    }
+
+    // Verificar se WebRTC Manager foi criado
+    if (!this.webrtcManager) {
+      this.initializeWebRTCManager();
+    }
+
+    if (!this.webrtcManager) {
+      alert('Vídeo chat não está disponível (navegador não suportado).');
+      return;
+    }
+
+    try {
+      // Mostrar card de vídeo chat
+      const videoChatCard = document.getElementById('videoChatCard');
+      if (videoChatCard) {
+        videoChatCard.style.display = 'block';
+        this.videoChatOpen = true;
+      }
+
+      // Iniciar conexão (player 1 é o iniciador)
+      const isInitiator = this.playerNumber === 1;
+      await this.webrtcManager.startConnection(isInitiator);
+
+      // Atualizar estado dos botões de controle
+      document.getElementById('toggleVideo').classList.add('active');
+      document.getElementById('toggleAudio').classList.add('active');
+
+      console.log('📹 Vídeo chat iniciado');
+    } catch (error) {
+      console.error('Erro ao abrir vídeo chat:', error);
+      alert('Erro ao iniciar vídeo chat: ' + error.message);
+      this.closeVideoChat();
+    }
+  }
+
+  /**
+   * Fechar vídeo chat
+   */
+  closeVideoChat() {
+    if (!this.videoChatOpen) return;
+
+    // Desconectar WebRTC
+    if (this.webrtcManager) {
+      this.webrtcManager.disconnect();
+    }
+
+    // Esconder card de vídeo chat
+    const videoChatCard = document.getElementById('videoChatCard');
+    if (videoChatCard) {
+      videoChatCard.style.display = 'none';
+      this.videoChatOpen = false;
+    }
+
+    // Resetar estado dos botões
+    document.getElementById('toggleVideo').classList.remove('active', 'inactive');
+    document.getElementById('toggleAudio').classList.remove('active', 'inactive');
+
+    console.log('📹 Vídeo chat fechado');
   }
 }
 

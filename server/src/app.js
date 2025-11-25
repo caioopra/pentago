@@ -45,7 +45,7 @@ app.use(helmet({
       connectSrc: ["'self'", "ws:", "wss:", "http://localhost:*", "https://localhost:*"], // WebSocket connections
       fontSrc: ["'self'", "data:"],
       objectSrc: ["'none'"],
-      mediaSrc: ["'self'"],
+      mediaSrc: ["'self'", "blob:", "mediastream:"], // Allow WebRTC media streams
       frameSrc: ["'none'"],
       baseUri: ["'self'"],
       formAction: ["'self'"],
