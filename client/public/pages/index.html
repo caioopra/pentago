@@ -12,7 +12,18 @@
 <body>
   <div class="container">
     <header>
-      <h1>🎮 Pentago Web</h1>
+      <div class="header-top">
+        <h1>🎮 Pentago Web</h1>
+        <!-- Theme Toggle -->
+        <div class="theme-toggle-container-header">
+          <span class="theme-icon theme-icon-light">☀️</span>
+          <label class="theme-toggle-switch">
+            <input type="checkbox" id="themeToggle">
+            <span class="theme-toggle-slider"></span>
+          </label>
+          <span class="theme-icon theme-icon-dark">🌙</span>
+        </div>
+      </div>
       <p>Jogo de tabuleiro estratégico online</p>
     </header>
 
@@ -76,9 +87,32 @@
     </div>
   </div>
 
+  <script src="/js/utils/theme.js"></script>
   <script src="/js/utils/api.js"></script>
   <script src="/js/main.js"></script>
   <script>
+    // Configurar toggle de tema
+    document.addEventListener('DOMContentLoaded', () => {
+      const themeToggle = document.getElementById('themeToggle');
+
+      if (!themeToggle) return;
+
+      // Definir estado inicial do toggle baseado no tema atual
+      themeToggle.checked = ThemeManager.isDark();
+
+      // Evento de mudança de tema
+      themeToggle.addEventListener('change', () => {
+        ThemeManager.toggleTheme();
+        // Força atualização do estado visual
+        themeToggle.checked = ThemeManager.isDark();
+      });
+    });
+
+    // Garantir que o toggle seja atualizado mesmo se a página já estiver carregada
+    window.addEventListener('load', () => {
+      ThemeManager.updateToggleState();
+    });
+
     document.addEventListener('DOMContentLoaded', async () => {
       const token = AuthManager.getToken();
 

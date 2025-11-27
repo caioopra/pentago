@@ -1,5 +1,37 @@
 /* Index Page Styles */
 
+/* Header Theme Toggle */
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.header-top h1 {
+  margin: 0;
+}
+
+.theme-toggle-container-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .header-top {
+    justify-content: center;
+  }
+
+  .theme-toggle-container-header {
+    order: -1;
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
 .user-info-card {
   display: none;
   background: var(--bg-secondary);

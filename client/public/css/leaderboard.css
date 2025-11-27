@@ -26,28 +26,28 @@
 .header-content h1 {
   margin: 0;
   font-size: 2.5rem;
-  color: var(--primary-color, #4c51bf);
+  color: var(--accent-color);
 }
 
 .btn-back {
   padding: 0.5rem 1rem;
-  background: var(--bg-secondary, #f7fafc);
-  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   text-decoration: none;
-  color: var(--text-primary, #2d3748);
+  color: var(--text-primary);
   font-weight: 500;
   transition: all 0.2s ease;
 }
 
 .btn-back:hover {
-  background: var(--bg-color, white);
-  border-color: var(--primary-color, #4c51bf);
-  color: var(--primary-color, #4c51bf);
+  background: var(--bg-primary);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
 }
 
 .subtitle {
-  color: var(--text-secondary, #718096);
+  color: var(--text-secondary);
   font-size: 1.1rem;
   margin: 0;
 }
@@ -62,8 +62,8 @@
 .spinner {
   width: 50px;
   height: 50px;
-  border: 4px solid var(--bg-secondary, #f7fafc);
-  border-top-color: var(--primary-color, #4c51bf);
+  border: 4px solid var(--border-color);
+  border-top-color: var(--accent-color);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto 1rem;
@@ -88,7 +88,7 @@
   text-align: center;
   font-size: 1.8rem;
   margin-bottom: 2rem;
-  color: var(--text-primary, #2d3748);
+  color: var(--text-primary);
 }
 
 .podium {
@@ -101,8 +101,8 @@
 }
 
 .podium-place {
-  background: var(--bg-color, white);
-  border: 2px solid var(--border-color, #e2e8f0);
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
   border-radius: 12px;
   padding: 1.5rem;
   text-align: center;
@@ -112,27 +112,24 @@
 
 .podium-place:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 16px var(--shadow);
 }
 
 .first-place {
   order: 2;
   border-color: #ffd700;
-  background: linear-gradient(135deg, #fff9e6 0%, white 100%);
   min-height: 280px;
 }
 
 .second-place {
   order: 1;
   border-color: #c0c0c0;
-  background: linear-gradient(135deg, #f5f5f5 0%, white 100%);
   min-height: 240px;
 }
 
 .third-place {
   order: 3;
   border-color: #cd7f32;
-  background: linear-gradient(135deg, #fff4e6 0%, white 100%);
   min-height: 220px;
 }
 
@@ -161,7 +158,7 @@
   border-radius: 50%;
   object-fit: cover;
   margin: 0 auto 1rem;
-  border: 3px solid var(--border-color, #e2e8f0);
+  border: 3px solid var(--border-color);
 }
 
 .first-place .podium-avatar {
@@ -173,7 +170,7 @@
 .podium-name {
   font-size: 1.2rem;
   font-weight: 600;
-  color: var(--text-primary, #2d3748);
+  color: var(--text-primary);
   margin-bottom: 0.5rem;
   word-break: break-word;
 }
@@ -181,7 +178,7 @@
 .podium-score {
   font-size: 1.5rem;
   font-weight: bold;
-  color: var(--primary-color, #4c51bf);
+  color: var(--accent-color);
 }
 
 .first-place .podium-score {
@@ -191,8 +188,8 @@
 
 /* Table Section */
 .table-section {
-  background: var(--bg-color, white);
-  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 2rem;
   margin-bottom: 2rem;
@@ -218,12 +215,12 @@
 }
 
 .stat-item {
-  color: var(--text-secondary, #718096);
+  color: var(--text-secondary);
   font-size: 0.95rem;
 }
 
 .stat-item strong {
-  color: var(--text-primary, #2d3748);
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -238,20 +235,20 @@
 }
 
 .leaderboard-table thead {
-  background: var(--bg-secondary, #f7fafc);
+  background: var(--bg-secondary);
 }
 
 .leaderboard-table th {
   padding: 1rem;
   text-align: left;
   font-weight: 600;
-  color: var(--text-primary, #2d3748);
-  border-bottom: 2px solid var(--border-color, #e2e8f0);
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-color);
 }
 
 .leaderboard-table td {
   padding: 1rem;
-  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .leaderboard-table tbody tr {
@@ -259,7 +256,7 @@
 }
 
 .leaderboard-table tbody tr:hover {
-  background: var(--bg-secondary, #f7fafc);
+  background: var(--bg-secondary);
 }
 
 /* Table Columns */
@@ -267,7 +264,7 @@
   width: 60px;
   text-align: center;
   font-weight: 600;
-  color: var(--text-secondary, #718096);
+  color: var(--text-secondary);
 }
 
 .col-avatar {
@@ -281,7 +278,7 @@
 .col-score {
   width: 120px;
   font-weight: 600;
-  color: var(--primary-color, #4c51bf);
+  color: var(--accent-color);
 }
 
 .col-location {
@@ -298,7 +295,7 @@
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid var(--border-color, #e2e8f0);
+  border: 2px solid var(--border-color);
 }
 
 .player-name {
@@ -309,12 +306,12 @@
 
 .player-name-text {
   font-weight: 500;
-  color: var(--text-primary, #2d3748);
+  color: var(--text-primary);
 }
 
 .player-email {
   font-size: 0.85rem;
-  color: var(--text-secondary, #718096);
+  color: var(--text-secondary);
   margin-top: 0.25rem;
 }
 
@@ -345,8 +342,8 @@
 }
 
 .rank-other {
-  background: var(--bg-secondary, #f7fafc);
-  color: var(--text-secondary, #718096);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
 }
 
 .score-value {
@@ -354,18 +351,18 @@
 }
 
 .location-text {
-  color: var(--text-primary, #2d3748);
+  color: var(--text-primary);
 }
 
 .age-text {
-  color: var(--text-secondary, #718096);
+  color: var(--text-secondary);
 }
 
 /* Footer */
 .page-footer {
   text-align: center;
   padding: 2rem 0;
-  color: var(--text-secondary, #718096);
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 

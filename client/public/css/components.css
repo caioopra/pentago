@@ -279,3 +279,103 @@
   animation: spin 0.6s linear infinite;
   color: white;
 }
+
+/* Theme Toggle Switch */
+.theme-toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px;
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.theme-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.theme-icon {
+  font-size: 1.5rem;
+  transition: opacity 0.3s, transform 0.3s;
+  cursor: pointer;
+  user-select: none;
+}
+
+.theme-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 30px;
+}
+
+.theme-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.theme-toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ddd;
+  transition: 0.4s;
+  border-radius: 30px;
+}
+
+.theme-toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 22px;
+  width: 22px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* When checked (dark mode ON) */
+input:checked + .theme-toggle-slider {
+  background-color: var(--accent-color);
+}
+
+input:checked + .theme-toggle-slider:before {
+  transform: translateX(30px);
+}
+
+.theme-toggle-slider:hover {
+  opacity: 0.8;
+}
+
+/* Theme icons - Light mode (default, toggle OFF) */
+:root .theme-icon-light,
+:root:not([data-theme]) .theme-icon-light {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+:root .theme-icon-dark,
+:root:not([data-theme]) .theme-icon-dark {
+  opacity: 0.4;
+}
+
+/* Theme icons - Dark mode (toggle ON) */
+[data-theme="dark"] .theme-icon-light {
+  opacity: 0.4;
+}
+
+[data-theme="dark"] .theme-icon-dark {
+  opacity: 1;
+  transform: scale(1.1);
+}
