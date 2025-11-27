@@ -77,7 +77,7 @@ class PentagoGameDemo {
 
     // Verifica vitória
     if (this.checkWinCondition()) {
-      this.endGame(this.currentPlayer);
+      this.endGame(this.winner);
       return;
     }
 
@@ -100,7 +100,7 @@ class PentagoGameDemo {
     this.rotateQuadrant(quadrant, direction, () => {
       // Verifica vitória
       if (this.checkWinCondition()) {
-        this.endGame(this.currentPlayer);
+        this.endGame(this.winner);
         return;
       }
 
@@ -189,7 +189,7 @@ class PentagoGameDemo {
       this.updateDisplay();
 
       if (this.checkWinCondition()) {
-        this.endGame(this.currentPlayer);
+        this.endGame(this.winner);
         return;
       }
 
@@ -204,7 +204,7 @@ class PentagoGameDemo {
 
       this.rotateQuadrant(move.quadrant, move.direction, () => {
         if (this.checkWinCondition()) {
-          this.endGame(this.currentPlayer);
+          this.endGame(this.winner);
           return;
         }
 
