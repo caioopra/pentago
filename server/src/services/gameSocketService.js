@@ -196,7 +196,9 @@ class GameSocketService {
 
       // Limpar timer de desconexão se existir (player reconectou)
       const disconnectKey = `${gameId}_${socket.userId}`;
-      if (this.disconnectTimers.has(disconnectKey)) {
+      const wasReconnecting = this.disconnectTimers.has(disconnectKey);
+
+      if (wasReconnecting) {
         clearTimeout(this.disconnectTimers.get(disconnectKey).timer);
         this.disconnectTimers.delete(disconnectKey);
         console.log(`✅ Jogador ${playerNumber} reconectou à partida ${gameId}`);
@@ -214,10 +216,12 @@ class GameSocketService {
         playerNumber
       });
 
-      // Notificar o oponente sobre reconexão
-      socket.to(`game_${gameId}`).emit('opponent_reconnected', {
-        playerNumber
-      });
+      // Notificar o oponente sobre reconexão APENAS se o jogador estava desconectado
+      if (wasReconnecting) {
+        socket.to(`game_${gameId}`).emit('opponent_reconnected', {
+          playerNumber
+        });
+      }
 
       // Se ambos conectados, mudar status para 'playing' e iniciar partida
       if (game.player1.connected && game.player2.connected && game.status === 'waiting') {

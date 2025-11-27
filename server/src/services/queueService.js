@@ -317,9 +317,9 @@ class QueueService {
     }
 
     try {
-      // Update game status
+      // Update game status to 'playing' when both confirm
       await Game.findByIdAndUpdate(match.gameId, {
-        status: 'waiting'
+        status: 'playing'
       });
 
       const game = await Game.findById(match.gameId)
@@ -339,7 +339,7 @@ class QueueService {
         game: game
       });
 
-      console.log(`✅ Partida ${matchId} confirmada e iniciada`);
+      console.log(`✅ Partida ${matchId} confirmada e iniciada com status 'playing'`);
 
       // Remove from pending matches
       this.pendingMatches.delete(matchId);

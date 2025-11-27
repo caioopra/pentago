@@ -1570,13 +1570,16 @@ class PentagoGameClient {
     const queuePanel = document.getElementById('queuePanel');
     const gameBoard = document.querySelector('.game-board');
     const gameControls = document.querySelector('.game-controls');
-    
+
     if (queuePanel) {
       queuePanel.style.display = 'none';
       queuePanel.classList.remove('active');
     }
     if (gameBoard) gameBoard.style.display = 'grid';
     if (gameControls) gameControls.style.display = 'flex';
+
+    // Clear any queue-related messages
+    this.hideMessage();
   }
 
   /**
