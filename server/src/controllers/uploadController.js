@@ -35,6 +35,50 @@ exports.uploadAvatar = async (req, res) => {
 };
 
 /**
+ * @desc    Upload default avatar (replaces the default.png file)
+ * @route   POST /api/upload/default-avatar
+ * @access  Private/Admin
+ */
+exports.uploadDefaultAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Por favor, envie uma imagem.'
+      });
+    }
+
+    // Source: uploaded file
+    const uploadedFilePath = req.file.path;
+
+    // Destination: client/public/assets/img/avatars/default.png
+    const defaultAvatarPath = path.join(__dirname, '../../../client/public/assets/img/avatars/default.png');
+
+    // Copy the uploaded file to replace default.png
+    await fs.copyFile(uploadedFilePath, defaultAvatarPath);
+
+    // Delete the temporary uploaded file
+    await fs.unlink(uploadedFilePath);
+
+    console.log('✅ Avatar padrão atualizado com sucesso');
+
+    res.status(200).json({
+      success: true,
+      message: 'Avatar padrão atualizado com sucesso!',
+      data: {
+        avatarUrl: '/assets/img/avatars/default.png'
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao fazer upload do avatar padrão:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao fazer upload do avatar padrão.'
+    });
+  }
+};
+
+/**
  * @desc    Delete an uploaded file
  * @route   DELETE /api/upload/:filename
  * @access  Private/Admin

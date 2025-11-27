@@ -737,7 +737,7 @@ async function uploadDefaultAvatar(file) {
     }
 
     const headers = {
-      'Authorization': `Bearer ${localStorage.getItem('token')}`
+      'Authorization': `Bearer ${AuthManager.getToken()}`
     };
 
     // Add CSRF token if available
@@ -745,7 +745,7 @@ async function uploadDefaultAvatar(file) {
       headers['x-csrf-token'] = csrfToken;
     }
 
-    const response = await fetch(`${API_BASE_URL}/upload/avatar`, {
+    const response = await fetch(`${API_BASE_URL}/upload/default-avatar`, {
       method: 'POST',
       headers: headers,
       body: formData,
