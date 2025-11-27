@@ -470,6 +470,143 @@ class PentagoGameClient {
     if (declineMatchBtn) {
       declineMatchBtn.addEventListener('click', () => this.declineMatch());
     }
+
+    // Visibility controls
+    this.initializeVisibilityControls();
+  }
+
+  /**
+   * Inicializar controles de visibilidade
+   */
+  initializeVisibilityControls() {
+    // Toggle Chat
+    const toggleChatBtn = document.getElementById('toggleChatBtn');
+    if (toggleChatBtn) {
+      toggleChatBtn.addEventListener('click', () => this.toggleChatVisibility());
+    }
+
+    // Toggle Queue/Sidebar
+    const toggleQueueBtn = document.getElementById('toggleQueueBtn');
+    if (toggleQueueBtn) {
+      toggleQueueBtn.addEventListener('click', () => this.toggleQueueVisibility());
+    }
+
+    // Toggle Videochat Visibility (without disconnecting)
+    const toggleVideoChatVisibilityBtn = document.getElementById('toggleVideoChatVisibilityBtn');
+    if (toggleVideoChatVisibilityBtn) {
+      toggleVideoChatVisibilityBtn.addEventListener('click', () => this.toggleVideoChatVisibility());
+    }
+
+    // Master Audio Control
+    const masterAudioBtn = document.getElementById('masterAudioBtn');
+    if (masterAudioBtn) {
+      masterAudioBtn.addEventListener('click', () => this.toggleMasterAudio());
+    }
+
+    // Initialize visibility states
+    this.chatVisible = true;
+    this.queueVisible = true;
+    this.videoChatVisibilityState = true; // visible when open
+    this.masterAudioEnabled = true;
+  }
+
+  /**
+   * Toggle Chat Visibility
+   */
+  toggleChatVisibility() {
+    const chatCard = document.querySelector('.chat-card');
+    const toggleBtn = document.getElementById('toggleChatBtn');
+
+    if (!chatCard || !toggleBtn) return;
+
+    this.chatVisible = !this.chatVisible;
+
+    if (this.chatVisible) {
+      chatCard.style.display = 'block';
+      toggleBtn.classList.add('active');
+    } else {
+      chatCard.style.display = 'none';
+      toggleBtn.classList.remove('active');
+    }
+
+    console.log(`💬 Chat ${this.chatVisible ? 'exibido' : 'ocultado'}`);
+  }
+
+  /**
+   * Toggle Queue/Sidebar Visibility
+   */
+  toggleQueueVisibility() {
+    const sidebarRight = document.querySelector('.sidebar-right');
+    const toggleBtn = document.getElementById('toggleQueueBtn');
+
+    if (!sidebarRight || !toggleBtn) return;
+
+    this.queueVisible = !this.queueVisible;
+
+    if (this.queueVisible) {
+      sidebarRight.style.display = 'flex';
+      toggleBtn.classList.add('active');
+    } else {
+      sidebarRight.style.display = 'none';
+      toggleBtn.classList.remove('active');
+    }
+
+    console.log(`👥 Fila ${this.queueVisible ? 'exibida' : 'ocultada'}`);
+  }
+
+  /**
+   * Toggle Videochat Visibility (without disconnecting)
+   */
+  toggleVideoChatVisibility() {
+    const videoChatCard = document.getElementById('videoChatCard');
+    const toggleBtn = document.getElementById('toggleVideoChatVisibilityBtn');
+
+    if (!videoChatCard || !toggleBtn) return;
+
+    // Only toggle if videochat is actually open
+    if (!this.videoChatOpen) return;
+
+    this.videoChatVisibilityState = !this.videoChatVisibilityState;
+
+    if (this.videoChatVisibilityState) {
+      videoChatCard.style.display = 'block';
+      toggleBtn.classList.add('active');
+      toggleBtn.textContent = '📹 Vídeo';
+    } else {
+      videoChatCard.style.display = 'none';
+      toggleBtn.classList.remove('active');
+      toggleBtn.textContent = '📹 Vídeo (oculto)';
+    }
+
+    console.log(`📹 Vídeo chat ${this.videoChatVisibilityState ? 'exibido' : 'ocultado (mantém conexão)'}`);
+  }
+
+  /**
+   * Toggle Master Audio
+   */
+  toggleMasterAudio() {
+    const toggleBtn = document.getElementById('masterAudioBtn');
+
+    if (!toggleBtn) return;
+
+    this.masterAudioEnabled = !this.masterAudioEnabled;
+
+    // Mute/unmute remote video audio
+    const remoteVideo = document.getElementById('remoteVideo');
+    if (remoteVideo) {
+      remoteVideo.muted = !this.masterAudioEnabled;
+    }
+
+    // Update button state
+    if (this.masterAudioEnabled) {
+      toggleBtn.classList.add('active');
+      toggleBtn.textContent = '🔊 Áudio';
+    } else {
+      toggleBtn.classList.remove('active');
+      toggleBtn.textContent = '🔇 Áudio';
+    }
+
+    console.log(`🔊 Áudio geral ${this.masterAudioEnabled ? 'ativado' : 'desativado'}`);
   }
 
   /**
@@ -1238,6 +1375,14 @@ class PentagoGameClient {
         videoChatCard.style.display = 'block';
         this.videoChatOpen = true;
 
+        // Mostrar botão de visibilidade do videochat
+        const toggleVideoChatVisibilityBtn = document.getElementById('toggleVideoChatVisibilityBtn');
+        if (toggleVideoChatVisibilityBtn) {
+          toggleVideoChatVisibilityBtn.style.display = 'flex';
+          toggleVideoChatVisibilityBtn.classList.add('active');
+          this.videoChatVisibilityState = true;
+        }
+
         // Atualizar botões
         document.getElementById('toggleVideo').classList.add('active');
         document.getElementById('toggleAudio').classList.add('active');
@@ -1340,6 +1485,14 @@ class PentagoGameClient {
         this.videoChatOpen = true;
       }
 
+      // Mostrar botão de visibilidade do videochat
+      const toggleVideoChatVisibilityBtn = document.getElementById('toggleVideoChatVisibilityBtn');
+      if (toggleVideoChatVisibilityBtn) {
+        toggleVideoChatVisibilityBtn.style.display = 'flex';
+        toggleVideoChatVisibilityBtn.classList.add('active');
+        this.videoChatVisibilityState = true;
+      }
+
       // Iniciar conexão (player 1 é o iniciador)
       const isInitiator = this.playerNumber === 1;
       await this.webrtcManager.startConnection(isInitiator);
@@ -1372,6 +1525,13 @@ class PentagoGameClient {
     if (videoChatCard) {
       videoChatCard.style.display = 'none';
       this.videoChatOpen = false;
+    }
+
+    // Esconder botão de visibilidade do videochat
+    const toggleVideoChatVisibilityBtn = document.getElementById('toggleVideoChatVisibilityBtn');
+    if (toggleVideoChatVisibilityBtn) {
+      toggleVideoChatVisibilityBtn.style.display = 'none';
+      toggleVideoChatVisibilityBtn.classList.remove('active');
     }
 
     // Resetar estado dos botões
@@ -1618,6 +1778,9 @@ class PentagoGameClient {
     if (queueCount) {
       queueCount.textContent = data.size || 0;
     }
+
+    // Update the queue display in the sidebar
+    this.updateQueueDisplay(data);
   }
 
   /**

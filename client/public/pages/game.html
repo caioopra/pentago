@@ -53,8 +53,8 @@
         </div>
       </div>
 
-      <!-- Chat (preparado para futuro) -->
-      <div class="card chat-card" style="display: none;">
+      <!-- Chat -->
+      <div class="card chat-card">
         <div class="card-header">
           <h3 class="card-title">Chat</h3>
           <div class="chat-header-actions">
@@ -116,6 +116,22 @@
         <div class="game-title">
           <h1>🎮 Pentago</h1>
           <a href="/pages/index.html" class="btn-back-demo">← Sair</a>
+        </div>
+
+        <!-- Controles de Visibilidade -->
+        <div class="visibility-controls">
+          <button id="toggleChatBtn" class="visibility-btn active" title="Mostrar/Ocultar Chat">
+            💬 Chat
+          </button>
+          <button id="toggleQueueBtn" class="visibility-btn active" title="Mostrar/Ocultar Fila">
+            👥 Fila
+          </button>
+          <button id="toggleVideoChatVisibilityBtn" class="visibility-btn" title="Mostrar/Ocultar Vídeo Chat" style="display: none;">
+            📹 Vídeo
+          </button>
+          <button id="masterAudioBtn" class="visibility-btn active" title="Ativar/Desativar Áudio Geral">
+            🔊 Áudio
+          </button>
         </div>
 
         <!-- Informações do turno atual -->
@@ -247,8 +263,8 @@
       </div>
     </main>
 
-    <!-- Sidebar direita - Fila de jogadores (preparado para futuro) -->
-    <aside class="sidebar sidebar-right" style="display: none;">
+    <!-- Sidebar direita - Fila de jogadores -->
+    <aside class="sidebar sidebar-right">
       <div class="card queue-card">
         <div class="card-header">
           <h3 class="card-title">Fila de Jogadores</h3>

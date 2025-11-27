@@ -184,6 +184,47 @@ function setupEventListeners() {
   document.getElementById('deleteModal').addEventListener('click', (e) => {
     if (e.target.id === 'deleteModal') closeDeleteModal();
   });
+
+  // Event delegation for games table actions
+  document.getElementById('gamesTableBody').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+    const gameId = btn.dataset.gameId;
+
+    if (action === 'delete-game') {
+      deleteGame(gameId);
+    }
+  });
+
+  // Event delegation for users table actions
+  document.getElementById('usersTableBody').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+    const userId = btn.dataset.userId;
+    const userName = btn.dataset.userName;
+
+    switch (action) {
+      case 'ban':
+        showBanModal(userId, userName);
+        break;
+      case 'unban':
+        showUnbanUser(userId, userName);
+        break;
+      case 'promote':
+        promoteUser(userId, userName);
+        break;
+      case 'demote':
+        demoteUser(userId, userName);
+        break;
+      case 'delete':
+        showDeleteModal(userId, userName);
+        break;
+    }
+  });
 }
 
 // Alternar entre secoes
@@ -317,13 +358,13 @@ function renderUsersTable(users) {
       <td>
         ${user.role !== 'admin' ? `
           ${user.isBanned ?
-            `<button class="action-btn unban" onclick="showUnbanUser('${user._id}', '${user.name}')">Desbanir</button>` :
-            `<button class="action-btn ban" onclick="showBanModal('${user._id}', '${user.name}')">Banir</button>`
+            `<button class="action-btn unban" data-action="unban" data-user-id="${user._id}" data-user-name="${user.name}">Desbanir</button>` :
+            `<button class="action-btn ban" data-action="ban" data-user-id="${user._id}" data-user-name="${user.name}">Banir</button>`
           }
-          <button class="action-btn promote" onclick="promoteUser('${user._id}', '${user.name}')">Promover</button>
-          <button class="action-btn delete" onclick="showDeleteModal('${user._id}', '${user.name}')">Deletar</button>
+          <button class="action-btn promote" data-action="promote" data-user-id="${user._id}" data-user-name="${user.name}">Promover</button>
+          <button class="action-btn delete" data-action="delete" data-user-id="${user._id}" data-user-name="${user.name}">Deletar</button>
         ` : `
-          <button class="action-btn demote" onclick="demoteUser('${user._id}', '${user.name}')">Rebaixar</button>
+          <button class="action-btn demote" data-action="demote" data-user-id="${user._id}" data-user-name="${user.name}">Rebaixar</button>
         `}
       </td>
     </tr>
@@ -522,13 +563,13 @@ function renderGamesTable(games) {
   tbody.innerHTML = games.map(game => `
     <tr>
       <td title="${game._id}">${game._id.substring(0, 8)}...</td>
-      <td>${game.user1 ? game.user1.name : 'N/A'}</td>
-      <td>${game.user2 ? game.user2.name : 'Aguardando...'}</td>
+      <td>${game.player1 && game.player1.userId ? game.player1.userId.name : 'N/A'}</td>
+      <td>${game.player2 && game.player2.userId ? game.player2.userId.name : 'Aguardando...'}</td>
       <td><span class="badge ${game.status}">${statusLabels[game.status] || game.status}</span></td>
       <td>${game.winner ? game.winner.name : '-'}</td>
       <td>${new Date(game.createdAt).toLocaleDateString('pt-BR')}</td>
       <td>
-        <button class="action-btn delete" onclick="deleteGame('${game._id}')">Deletar</button>
+        <button class="action-btn delete" data-action="delete-game" data-game-id="${game._id}">Deletar</button>
       </td>
     </tr>
   `).join('');
