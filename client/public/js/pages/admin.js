@@ -658,27 +658,45 @@ async function loadConfig() {
   try {
     const response = await apiRequest('/admin/config');
 
-    if (response.success) {
+    if (response.success && response.data) {
       const { defaultAvatar, inactivity, queue, video, upload } = response.data;
 
       // Avatar padrao
-      document.getElementById('defaultAvatarUrl').textContent = defaultAvatar;
-      document.getElementById('defaultAvatarPreview').src = defaultAvatar;
+      if (defaultAvatar) {
+        document.getElementById('defaultAvatarUrl').textContent = defaultAvatar;
+        document.getElementById('defaultAvatarPreview').src = defaultAvatar;
+      }
 
       // Queue config
-      document.getElementById('maxQueueSize').value = queue.maxSize;
+      if (queue && queue.maxSize !== undefined) {
+        document.getElementById('maxQueueSize').value = queue.maxSize;
+      }
 
       // Inactivity config
-      document.getElementById('inactivityTimeout').value = inactivity.timeoutSeconds;
+      if (inactivity && inactivity.timeoutSeconds !== undefined) {
+        document.getElementById('inactivityTimeout').value = inactivity.timeoutSeconds;
+      }
 
       // Video config
-      document.getElementById('videoMaxAge').value = video.maxAgeDays;
-      document.getElementById('videoMaxSize').value = video.maxSizeGB;
-      document.getElementById('videoFps').value = video.fps;
-      document.getElementById('videoBitrate').value = video.bitrate;
+      if (video) {
+        if (video.maxAgeDays !== undefined) {
+          document.getElementById('videoMaxAge').value = video.maxAgeDays;
+        }
+        if (video.maxSizeGB !== undefined) {
+          document.getElementById('videoMaxSize').value = video.maxSizeGB;
+        }
+        if (video.fps !== undefined) {
+          document.getElementById('videoFps').value = video.fps;
+        }
+        if (video.bitrate !== undefined) {
+          document.getElementById('videoBitrate').value = video.bitrate;
+        }
+      }
 
       // Upload config
-      document.getElementById('uploadMaxSize').value = upload.maxSizeMB;
+      if (upload && upload.maxSizeMB !== undefined) {
+        document.getElementById('uploadMaxSize').value = upload.maxSizeMB;
+      }
     }
   } catch (error) {
     console.error('Erro ao carregar configuracoes:', error);

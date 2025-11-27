@@ -87,7 +87,29 @@ configSchema.statics.getConfig = async function() {
   let config = await this.findOne();
 
   if (!config) {
-    config = await this.create({});
+    // Create with explicit defaults to ensure nested objects are initialized
+    config = await this.create({
+      defaultAvatar: '/assets/img/avatars/default.png',
+      inactivity: {
+        timeoutSeconds: 60
+      },
+      queue: {
+        maxSize: 25
+      },
+      video: {
+        maxAgeDays: 15,
+        maxSizeGB: 1,
+        fps: 24,
+        bitrate: '4000k'
+      },
+      upload: {
+        maxSizeMB: 10
+      },
+      rateLimit: {
+        windowMs: 900000,
+        maxRequests: 100
+      }
+    });
   }
 
   return config;
@@ -97,21 +119,36 @@ configSchema.statics.getConfig = async function() {
 configSchema.statics.updateConfig = async function(updates) {
   let config = await this.getConfig();
 
-  // Atualizar campos aninhados
+  // Atualizar campos aninhados (merge with existing values)
   if (updates.inactivity) {
-    config.inactivity = { ...config.inactivity, ...updates.inactivity };
+    config.inactivity = {
+      ...(config.inactivity || {}),
+      ...updates.inactivity
+    };
   }
   if (updates.queue) {
-    config.queue = { ...config.queue, ...updates.queue };
+    config.queue = {
+      ...(config.queue || {}),
+      ...updates.queue
+    };
   }
   if (updates.video) {
-    config.video = { ...config.video, ...updates.video };
+    config.video = {
+      ...(config.video || {}),
+      ...updates.video
+    };
   }
   if (updates.upload) {
-    config.upload = { ...config.upload, ...updates.upload };
+    config.upload = {
+      ...(config.upload || {}),
+      ...updates.upload
+    };
   }
   if (updates.rateLimit) {
-    config.rateLimit = { ...config.rateLimit, ...updates.rateLimit };
+    config.rateLimit = {
+      ...(config.rateLimit || {}),
+      ...updates.rateLimit
+    };
   }
   if (updates.defaultAvatar !== undefined) {
     config.defaultAvatar = updates.defaultAvatar;
