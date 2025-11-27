@@ -83,6 +83,16 @@ class GameSocketService {
         socket.emit('queue_info', this.queueService.getQueueInfo());
       });
 
+      // Confirmar participação na partida
+      socket.on('confirm_match', async (data) => {
+        await this.handleConfirmMatch(socket, data);
+      });
+
+      // Recusar participação na partida
+      socket.on('decline_match', async (data) => {
+        await this.handleDeclineMatch(socket, data);
+      });
+
       // === EVENTOS DE CHAT ===
 
       // Enviar mensagem
@@ -552,6 +562,46 @@ class GameSocketService {
 
     const result = this.queueService.removeFromQueue(socket.userId);
     socket.emit('queue_left', result);
+  }
+
+  /**
+   * Handler: Confirmar participação na partida
+   */
+  async handleConfirmMatch(socket, data) {
+    if (!socket.userId) {
+      socket.emit('error', { message: 'Você precisa estar autenticado.' });
+      return;
+    }
+
+    const { matchId } = data;
+
+    if (!matchId) {
+      socket.emit('error', { message: 'Match ID é obrigatório.' });
+      return;
+    }
+
+    const result = await this.queueService.confirmMatch(socket.userId, matchId);
+    socket.emit('match_confirm_result', result);
+  }
+
+  /**
+   * Handler: Recusar participação na partida
+   */
+  async handleDeclineMatch(socket, data) {
+    if (!socket.userId) {
+      socket.emit('error', { message: 'Você precisa estar autenticado.' });
+      return;
+    }
+
+    const { matchId } = data;
+
+    if (!matchId) {
+      socket.emit('error', { message: 'Match ID é obrigatório.' });
+      return;
+    }
+
+    const result = await this.queueService.declineMatch(socket.userId, matchId);
+    socket.emit('match_decline_result', result);
   }
 
   /**

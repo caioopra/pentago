@@ -9,6 +9,15 @@ class PentagoGameClient {
     this.socket = null;
     this.connected = false;
 
+    // Queue state
+    this.inQueue = false;
+    this.queuePosition = null;
+
+    // Match confirmation state
+    this.pendingMatch = null; // { matchId, gameId, opponent, timeout }
+    this.confirmationTimer = null;
+    this.confirmationInterval = null;
+
     // Estado do jogo (sincronizado com servidor)
     this.gameId = null;
     this.playerNumber = null; // 1 ou 2
@@ -54,8 +63,27 @@ class PentagoGameClient {
     // Inicializar event listeners da UI
     this.initializeUIListeners();
 
-    // Criar ou entrar em partida
-    await this.findOrCreateGame();
+    // Show queue panel instead of auto-joining
+    this.showQueuePanel();
+
+    // Get initial queue info
+    await this.waitForConnection();
+    this.socket.emit('get_queue_info');
+  }
+
+  /**
+   * Wait for socket connection
+   */
+  async waitForConnection() {
+    let attempts = 0;
+    while (!this.connected && attempts < 50) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
+    }
+
+    if (!this.connected) {
+      throw new Error('Não foi possível conectar ao servidor');
+    }
   }
 
   /**
@@ -270,51 +298,37 @@ class PentagoGameClient {
 
     // Entrou na fila
     this.socket.on('queue_joined', (data) => {
-      console.log('📋 Entrou na fila:', data);
-      this.showMessage(`Você está na fila (posição ${data.position}/${data.queueSize}). Aguardando oponente...`, 'info');
-      this.updateQueueUI();
-
-      // Habilitar chat do lobby para jogadores na fila
-      this.enableLobbyChat();
+      this.handleQueueJoined(data);
     });
 
     // Fila atualizada
     this.socket.on('queue_updated', (data) => {
-      console.log('📋 Fila atualizada:', data);
-      this.updateQueueDisplay(data);
+      this.handleQueueUpdated(data);
     });
 
-    // Match encontrado
+    // Match encontrado - agora requer confirmação
     this.socket.on('match_found', (data) => {
-      console.log('🎯 Match encontrado!', data);
-      this.gameId = data.gameId;
-      this.playerNumber = data.playerNumber;
-      this.showMessage(data.message, 'success');
-
-      // Entrar na partida
-      this.socket.emit('join_game', { gameId: this.gameId });
+      this.handleMatchFound(data);
     });
 
-    // Erro na fila
-    this.socket.on('queue_error', (data) => {
-      console.error('❌ Erro na fila:', data.message);
+    // Partida confirmada - ambos jogadores prontos
+    this.socket.on('match_confirmed', (data) => {
+      this.handleMatchConfirmed(data);
+    });
 
-      // Se já está em partida, reconectar
-      if (data.gameId) {
-        this.gameId = data.gameId;
-        this.showMessage('Reconectando à sua partida...', 'info');
-        this.socket.emit('join_game', { gameId: this.gameId });
-      } else {
-        this.showMessage(data.message, 'error');
-      }
+    // Partida cancelada - timeout ou recusa
+    this.socket.on('match_cancelled', (data) => {
+      this.handleMatchCancelled(data);
     });
 
     // Saiu da fila
     this.socket.on('queue_left', (data) => {
-      console.log('👋 Saiu da fila');
-      if (data.success) {
-        this.showMessage('Você saiu da fila.', 'info');
-      }
+      this.handleQueueLeft(data);
+    });
+
+    // Queue info response
+    this.socket.on('queue_info', (data) => {
+      this.handleQueueUpdated(data);
     });
 
     // === EVENTOS DE CHAT ===
@@ -406,6 +420,30 @@ class PentagoGameClient {
 
     // Vídeo Chat
     this.initializeVideoChatListeners();
+
+    // Queue buttons
+    const joinQueueBtn = document.getElementById('joinQueueBtn');
+    const leaveQueueBtn = document.getElementById('leaveQueueBtn');
+
+    if (joinQueueBtn) {
+      joinQueueBtn.addEventListener('click', () => this.joinQueue());
+    }
+
+    if (leaveQueueBtn) {
+      leaveQueueBtn.addEventListener('click', () => this.leaveQueue());
+    }
+
+    // Match confirmation buttons
+    const confirmMatchBtn = document.getElementById('confirmMatchBtn');
+    const declineMatchBtn = document.getElementById('declineMatchBtn');
+
+    if (confirmMatchBtn) {
+      confirmMatchBtn.addEventListener('click', () => this.confirmMatch());
+    }
+
+    if (declineMatchBtn) {
+      declineMatchBtn.addEventListener('click', () => this.declineMatch());
+    }
   }
 
   /**
@@ -1276,9 +1314,277 @@ class PentagoGameClient {
 
     console.log('📹 Vídeo chat fechado');
   }
+
+  /**
+   * ========================================
+   * QUEUE AND MATCHMAKING METHODS
+   * ========================================
+   */
+
+  /**
+   * Show queue panel
+   */
+  showQueuePanel() {
+    const queuePanel = document.getElementById('queuePanel');
+    const gameBoard = document.querySelector('.game-board');
+    const gameControls = document.querySelector('.game-controls');
+    
+    if (queuePanel) {
+      queuePanel.style.display = 'block';
+      queuePanel.classList.add('active');
+    }
+    if (gameBoard) gameBoard.style.display = 'none';
+    if (gameControls) gameControls.style.display = 'none';
+  }
+
+  /**
+   * Hide queue panel
+   */
+  hideQueuePanel() {
+    const queuePanel = document.getElementById('queuePanel');
+    const gameBoard = document.querySelector('.game-board');
+    const gameControls = document.querySelector('.game-controls');
+    
+    if (queuePanel) {
+      queuePanel.style.display = 'none';
+      queuePanel.classList.remove('active');
+    }
+    if (gameBoard) gameBoard.style.display = 'grid';
+    if (gameControls) gameControls.style.display = 'flex';
+  }
+
+  /**
+   * Join queue
+   */
+  joinQueue() {
+    if (!this.connected) {
+      this.showMessage('Conectando ao servidor...', 'info');
+      return;
+    }
+
+    console.log('🎯 Entrando na fila...');
+    this.socket.emit('join_queue');
+
+    // Show waiting state
+    document.getElementById('queueActions').style.display = 'none';
+    document.getElementById('queueWaiting').style.display = 'flex';
+    this.inQueue = true;
+  }
+
+  /**
+   * Leave queue
+   */
+  leaveQueue() {
+    console.log('👋 Saindo da fila...');
+    this.socket.emit('leave_queue');
+
+    // Reset UI
+    document.getElementById('queueActions').style.display = 'flex';
+    document.getElementById('queueWaiting').style.display = 'none';
+    this.inQueue = false;
+    this.queuePosition = null;
+  }
+
+  /**
+   * Handle match found
+   */
+  handleMatchFound(data) {
+    console.log('🎮 Partida encontrada!', data);
+
+    this.pendingMatch = data;
+
+    // Show confirmation modal
+    this.showConfirmationModal(data);
+
+    // Start countdown timer
+    this.startConfirmationTimer(data.timeout || 30);
+  }
+
+  /**
+   * Show confirmation modal
+   */
+  showConfirmationModal(data) {
+    const modal = document.getElementById('matchConfirmModal');
+    const opponentAvatar = document.getElementById('confirmOpponentAvatar');
+    const opponentName = document.getElementById('confirmOpponentName');
+    const opponentScore = document.getElementById('confirmOpponentScore');
+
+    if (data.opponent) {
+      opponentAvatar.src = data.opponent.avatar || '/assets/img/avatars/default.png';
+      opponentName.textContent = data.opponent.username || 'Oponente';
+      opponentScore.textContent = data.opponent.score || 0;
+    }
+
+    modal.style.display = 'flex';
+  }
+
+  /**
+   * Hide confirmation modal
+   */
+  hideConfirmationModal() {
+    const modal = document.getElementById('matchConfirmModal');
+    modal.style.display = 'none';
+
+    // Clear timers
+    if (this.confirmationTimer) {
+      clearTimeout(this.confirmationTimer);
+      this.confirmationTimer = null;
+    }
+    if (this.confirmationInterval) {
+      clearInterval(this.confirmationInterval);
+      this.confirmationInterval = null;
+    }
+  }
+
+  /**
+   * Start confirmation countdown
+   */
+  startConfirmationTimer(seconds) {
+    const timerDisplay = document.getElementById('confirmTimer');
+    let remaining = seconds;
+
+    timerDisplay.textContent = remaining;
+
+    // Update every second
+    this.confirmationInterval = setInterval(() => {
+      remaining--;
+      timerDisplay.textContent = remaining;
+
+      if (remaining <= 0) {
+        clearInterval(this.confirmationInterval);
+      }
+    }, 1000);
+  }
+
+  /**
+   * Confirm match
+   */
+  confirmMatch() {
+    if (!this.pendingMatch) {
+      console.error('❌ Nenhuma partida pendente');
+      return;
+    }
+
+    console.log('✅ Confirmando partida...');
+
+    this.socket.emit('confirm_match', {
+      matchId: this.pendingMatch.matchId
+    });
+
+    // Disable buttons while waiting
+    document.getElementById('confirmMatchBtn').disabled = true;
+    document.getElementById('declineMatchBtn').disabled = true;
+  }
+
+  /**
+   * Decline match
+   */
+  declineMatch() {
+    if (!this.pendingMatch) {
+      console.error('❌ Nenhuma partida pendente');
+      return;
+    }
+
+    console.log('❌ Recusando partida...');
+
+    this.socket.emit('decline_match', {
+      matchId: this.pendingMatch.matchId
+    });
+
+    this.hideConfirmationModal();
+    this.pendingMatch = null;
+
+    // Return to queue panel
+    this.showQueuePanel();
+  }
+
+  /**
+   * Handle match confirmed - both players ready
+   */
+  handleMatchConfirmed(data) {
+    console.log('✅ Partida confirmada! Iniciando...', data);
+
+    this.hideConfirmationModal();
+    this.pendingMatch = null;
+
+    // Set game data
+    this.gameId = data.gameId;
+    this.playerNumber = data.playerNumber;
+    this.game = data.game;
+
+    // Hide queue panel and show game
+    this.hideQueuePanel();
+
+    // Join the game room
+    this.socket.emit('join_game', { gameId: data.gameId });
+  }
+
+  /**
+   * Handle match cancelled
+   */
+  handleMatchCancelled(data) {
+    console.log('❌ Partida cancelada:', data.reason);
+
+    this.hideConfirmationModal();
+    this.pendingMatch = null;
+
+    this.showMessage(data.message, 'warning');
+
+    // If player confirmed but opponent didn't, they're back in queue
+    if (data.reason === 'opponent_timeout' || data.reason === 'opponent_declined') {
+      // Show waiting state again
+      document.getElementById('queueActions').style.display = 'none';
+      document.getElementById('queueWaiting').style.display = 'flex';
+      this.inQueue = true;
+    } else {
+      // Player didn't confirm or declined - show join button again
+      document.getElementById('queueActions').style.display = 'flex';
+      document.getElementById('queueWaiting').style.display = 'none';
+      this.inQueue = false;
+    }
+  }
+
+  /**
+   * Handle queue updated
+   */
+  handleQueueUpdated(data) {
+    const queueCount = document.getElementById('queuePlayersInline');
+    if (queueCount) {
+      queueCount.textContent = data.size || 0;
+    }
+  }
+
+  /**
+   * Handle queue joined
+   */
+  handleQueueJoined(data) {
+    console.log('✅ Entrou na fila', data);
+    if (data.success) {
+      this.showMessage(data.message, 'success');
+      this.queuePosition = data.position;
+      
+      const positionText = document.getElementById('queuePositionText');
+      if (positionText) {
+        positionText.textContent = data.position || '?';
+      }
+    } else {
+      this.showMessage(data.message, 'error');
+      this.leaveQueue();
+    }
+  }
+
+  /**
+   * Handle queue left
+   */
+  handleQueueLeft(data) {
+    console.log('👋 Saiu da fila', data);
+    if (data.success) {
+      this.showMessage(data.message, 'info');
+    }
+  }
 }
 
-// Inicializar quando a página carregar
+// Initialize game when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   const game = new PentagoGameClient();
 

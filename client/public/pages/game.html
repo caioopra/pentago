@@ -130,6 +130,36 @@
         </div>
       </header>
 
+      <!-- Painel de Fila (exibido antes de entrar em partida) -->
+      <div id="queuePanel" class="queue-panel">
+        <div class="queue-panel-header">
+          <h2>🎮 Matchmaking</h2>
+          <p>Entre na fila para encontrar um oponente</p>
+        </div>
+        <div class="queue-panel-body">
+          <div id="queueStatus" class="queue-status">
+            <p class="queue-players-count">
+              <strong id="queuePlayersInline">0</strong> jogadores na fila
+            </p>
+          </div>
+          <div id="queueActions" class="queue-actions">
+            <button id="joinQueueBtn" class="btn btn-primary btn-large">
+              🎯 Entrar na Fila
+            </button>
+          </div>
+          <div id="queueWaiting" class="queue-waiting" style="display: none;">
+            <div class="waiting-animation">
+              <div class="spinner"></div>
+              <p>Procurando oponente...</p>
+              <p class="queue-position">Posição na fila: <strong id="queuePositionText">1</strong></p>
+            </div>
+            <button id="leaveQueueBtn" class="btn btn-danger">
+              ❌ Sair da Fila
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Mensagem de status do jogo -->
       <div id="gameMessage" class="game-message hidden"></div>
 
@@ -244,6 +274,37 @@
         </div>
       </div>
     </aside>
+  </div>
+
+  <!-- Modal de Confirmação de Partida -->
+  <div id="matchConfirmModal" class="match-confirm-modal" style="display: none;">
+    <div class="match-confirm-content">
+      <div class="match-confirm-header">
+        <h2>⚔️ Partida Encontrada!</h2>
+      </div>
+      <div class="match-confirm-body">
+        <div class="opponent-info">
+          <img id="confirmOpponentAvatar" src="/assets/img/avatars/default.png" alt="Oponente" class="opponent-avatar">
+          <h3 id="confirmOpponentName">Oponente</h3>
+          <p class="opponent-score">Pontos: <strong id="confirmOpponentScore">0</strong></p>
+        </div>
+        <div class="confirmation-timer">
+          <p>Confirme sua participação</p>
+          <div class="timer-circle">
+            <span id="confirmTimer">30</span>
+          </div>
+        </div>
+      </div>
+      <div class="match-confirm-actions">
+        <button id="confirmMatchBtn" class="btn btn-primary btn-large">
+          ✅ Confirmar Partida
+        </button>
+        <button id="declineMatchBtn" class="btn btn-secondary">
+          ❌ Recusar
+        </button>
+      </div>
+      <p class="confirm-warning">Se não confirmar em 30 segundos, você será removido da fila</p>
+    </div>
   </div>
 
   <!-- Scripts -->

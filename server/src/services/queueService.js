@@ -11,6 +11,8 @@ class QueueService {
     this.io = io;
     this.queue = []; // Array de objetos: { userId, socketId, username, avatar, joinedAt }
     this.maxQueueSize = parseInt(process.env.MAX_QUEUE_SIZE) || 25;
+    this.pendingMatches = new Map(); // matchId -> { player1, player2, confirmations, timer, gameId }
+    this.confirmationTimeout = 30000; // 30 seconds
   }
 
   /**
@@ -173,7 +175,7 @@ class QueueService {
 
       console.log(`🎮 Match encontrado! ${player1Entry.username} vs ${player2Entry.username}`);
 
-      // Criar partida (converter strings de volta para ObjectId)
+      // Criar partida temporária (converter strings de volta para ObjectId)
       const game = await Game.create({
         player1: {
           userId: new mongoose.Types.ObjectId(player1Entry.userId),
@@ -185,15 +187,28 @@ class QueueService {
           socketId: player2Entry.socketId,
           connected: false
         },
-        status: 'waiting'
+        status: 'pending_confirmation' // New status for confirmation phase
       });
 
       // Populate para ter os dados completos
       await game.populate('player1.userId', 'name avatar score');
       await game.populate('player2.userId', 'name avatar score');
 
-      // Notificar ambos jogadores
+      // Generate match ID
+      const matchId = game._id.toString();
+
+      // Store pending match
+      this.pendingMatches.set(matchId, {
+        player1: player1Entry,
+        player2: player2Entry,
+        confirmations: new Set(),
+        gameId: game._id,
+        createdAt: Date.now()
+      });
+
+      // Notificar ambos jogadores - requerir confirmação
       this.io.to(player1Entry.socketId).emit('match_found', {
+        matchId,
         gameId: game._id,
         playerNumber: 1,
         opponent: {
@@ -201,10 +216,12 @@ class QueueService {
           avatar: player2Entry.avatar,
           score: player2Entry.score
         },
-        message: 'Partida encontrada! Conectando...'
+        timeout: this.confirmationTimeout / 1000,
+        message: 'Partida encontrada! Confirme para jogar.'
       });
 
       this.io.to(player2Entry.socketId).emit('match_found', {
+        matchId,
         gameId: game._id,
         playerNumber: 2,
         opponent: {
@@ -212,13 +229,21 @@ class QueueService {
           avatar: player1Entry.avatar,
           score: player1Entry.score
         },
-        message: 'Partida encontrada! Conectando...'
+        timeout: this.confirmationTimeout / 1000,
+        message: 'Partida encontrada! Confirme para jogar.'
       });
+
+      // Set timeout for confirmation
+      const timer = setTimeout(() => {
+        this.handleMatchTimeout(matchId);
+      }, this.confirmationTimeout);
+
+      this.pendingMatches.get(matchId).timer = timer;
 
       // Atualizar fila
       this.broadcastQueueUpdate();
 
-      console.log(`✅ Partida ${game._id} criada via matchmaking`);
+      console.log(`⏳ Aguardando confirmação para partida ${matchId}`);
 
       // Se ainda tem 2+ jogadores, tentar outro match
       if (this.queue.length >= 2) {
@@ -226,10 +251,207 @@ class QueueService {
       }
     } catch (error) {
       console.error('Erro ao fazer match:', error);
-
-      // Em caso de erro, devolver jogadores à fila
-      // (eles podem tentar novamente)
     }
+  }
+
+  /**
+   * Confirma participação do jogador na partida
+   */
+  async confirmMatch(userId, matchId) {
+    const match = this.pendingMatches.get(matchId);
+
+    if (!match) {
+      return {
+        success: false,
+        message: 'Partida não encontrada ou já expirou.'
+      };
+    }
+
+    // Add confirmation
+    match.confirmations.add(userId.toString());
+
+    console.log(`✅ Jogador ${userId} confirmou partida ${matchId} (${match.confirmations.size}/2)`);
+
+    // Check if both players confirmed
+    if (match.confirmations.size === 2) {
+      clearTimeout(match.timer);
+      await this.startConfirmedMatch(matchId);
+      return {
+        success: true,
+        message: 'Partida confirmada! Iniciando...'
+      };
+    }
+
+    return {
+      success: true,
+      message: 'Aguardando confirmação do oponente...'
+    };
+  }
+
+  /**
+   * Inicia partida após ambos confirmarem
+   */
+  async startConfirmedMatch(matchId) {
+    const match = this.pendingMatches.get(matchId);
+
+    if (!match) {
+      console.error(`❌ Match ${matchId} não encontrado`);
+      return;
+    }
+
+    try {
+      // Update game status
+      await Game.findByIdAndUpdate(match.gameId, {
+        status: 'waiting'
+      });
+
+      const game = await Game.findById(match.gameId)
+        .populate('player1.userId', 'name avatar score')
+        .populate('player2.userId', 'name avatar score');
+
+      // Notify both players that match is starting
+      this.io.to(match.player1.socketId).emit('match_confirmed', {
+        gameId: game._id,
+        playerNumber: 1,
+        game: game
+      });
+
+      this.io.to(match.player2.socketId).emit('match_confirmed', {
+        gameId: game._id,
+        playerNumber: 2,
+        game: game
+      });
+
+      console.log(`✅ Partida ${matchId} confirmada e iniciada`);
+
+      // Remove from pending matches
+      this.pendingMatches.delete(matchId);
+
+    } catch (error) {
+      console.error('Erro ao iniciar partida confirmada:', error);
+      this.handleMatchTimeout(matchId);
+    }
+  }
+
+  /**
+   * Trata timeout de confirmação
+   */
+  async handleMatchTimeout(matchId) {
+    const match = this.pendingMatches.get(matchId);
+
+    if (!match) {
+      return;
+    }
+
+    console.log(`⏰ Timeout de confirmação para partida ${matchId}`);
+
+    // Cancel game
+    try {
+      await Game.findByIdAndUpdate(match.gameId, {
+        status: 'cancelled'
+      });
+    } catch (error) {
+      console.error('Erro ao cancelar partida:', error);
+    }
+
+    // Notify players
+    const player1Confirmed = match.confirmations.has(match.player1.userId);
+    const player2Confirmed = match.confirmations.has(match.player2.userId);
+
+    if (!player1Confirmed) {
+      this.io.to(match.player1.socketId).emit('match_cancelled', {
+        reason: 'timeout',
+        message: 'Você não confirmou a partida a tempo.'
+      });
+    } else {
+      // Player 1 confirmed but player 2 didn't - return player 1 to queue
+      this.queue.unshift(match.player1);
+      this.io.to(match.player1.socketId).emit('match_cancelled', {
+        reason: 'opponent_timeout',
+        message: 'O oponente não confirmou. Você foi retornado ao início da fila.'
+      });
+    }
+
+    if (!player2Confirmed) {
+      this.io.to(match.player2.socketId).emit('match_cancelled', {
+        reason: 'timeout',
+        message: 'Você não confirmou a partida a tempo.'
+      });
+    } else {
+      // Player 2 confirmed but player 1 didn't - return player 2 to queue
+      this.queue.unshift(match.player2);
+      this.io.to(match.player2.socketId).emit('match_cancelled', {
+        reason: 'opponent_timeout',
+        message: 'O oponente não confirmou. Você foi retornado ao início da fila.'
+      });
+    }
+
+    // Remove from pending matches
+    this.pendingMatches.delete(matchId);
+
+    // Update queue
+    this.broadcastQueueUpdate();
+
+    // Try to match again if there are players waiting
+    if (this.queue.length >= 2) {
+      setTimeout(() => this.tryMatch(), 1000);
+    }
+  }
+
+  /**
+   * Jogador declina a partida
+   */
+  async declineMatch(userId, matchId) {
+    const match = this.pendingMatches.get(matchId);
+
+    if (!match) {
+      return {
+        success: false,
+        message: 'Partida não encontrada.'
+      };
+    }
+
+    clearTimeout(match.timer);
+
+    // Cancel game
+    try {
+      await Game.findByIdAndUpdate(match.gameId, {
+        status: 'cancelled'
+      });
+    } catch (error) {
+      console.error('Erro ao cancelar partida:', error);
+    }
+
+    // Determine which player declined
+    const player1Declined = match.player1.userId === userId.toString();
+    const otherPlayer = player1Declined ? match.player2 : match.player1;
+
+    // Return other player to front of queue
+    this.queue.unshift(otherPlayer);
+
+    // Notify other player
+    this.io.to(otherPlayer.socketId).emit('match_cancelled', {
+      reason: 'opponent_declined',
+      message: 'O oponente recusou a partida. Você foi retornado ao início da fila.'
+    });
+
+    console.log(`❌ Jogador ${userId} recusou partida ${matchId}`);
+
+    // Remove from pending matches
+    this.pendingMatches.delete(matchId);
+
+    // Update queue
+    this.broadcastQueueUpdate();
+
+    // Try to match again
+    if (this.queue.length >= 2) {
+      setTimeout(() => this.tryMatch(), 500);
+    }
+
+    return {
+      success: true,
+      message: 'Você recusou a partida.'
+    };
   }
 
   /**

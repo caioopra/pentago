@@ -38,7 +38,7 @@ const gameSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['waiting', 'playing', 'finished', 'abandoned'],
+    enum: ['waiting', 'playing', 'finished', 'abandoned', 'pending_confirmation', 'cancelled'],
     default: 'waiting'
   },
   // Board dividido em 4 quadrantes de 9 células cada
@@ -80,7 +80,7 @@ const gameSchema = new mongoose.Schema({
 
 // Método para verificar se o jogo está ativo
 gameSchema.methods.isActive = function() {
-  return this.status === 'playing' || this.status === 'waiting';
+  return this.status === 'playing' || this.status === 'waiting' || this.status === 'pending_confirmation';
 };
 
 // Método para verificar se é o turno do jogador
