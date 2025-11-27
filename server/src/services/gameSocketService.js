@@ -432,15 +432,20 @@ class GameSocketService {
 
         // Verificar se ambos jogadores saíram
         if (!game.player1.connected && !game.player2.connected) {
-          console.log(`🗑️ Ambos jogadores saíram da partida ${gameId} - deletando partida`);
+          // Só deletar partidas não finalizadas (preservar histórico)
+          if (game.status !== 'finished' && game.status !== 'abandoned') {
+            console.log(`🗑️ Ambos jogadores saíram da partida ${gameId} - deletando partida não finalizada`);
 
-          // Deletar a partida da base de dados
-          await Game.findByIdAndDelete(gameId);
+            // Deletar a partida da base de dados
+            await Game.findByIdAndDelete(gameId);
 
-          // Notificar a sala
-          this.io.to(`game_${gameId}`).emit('game_deleted', {
-            message: 'A partida foi encerrada pois ambos os jogadores saíram.'
-          });
+            // Notificar a sala
+            this.io.to(`game_${gameId}`).emit('game_deleted', {
+              message: 'A partida foi encerrada pois ambos os jogadores saíram.'
+            });
+          } else {
+            console.log(`📊 Partida ${gameId} finalizada - preservando para histórico`);
+          }
         }
       }
 
@@ -508,8 +513,6 @@ class GameSocketService {
 
           // Verificar se ambos jogadores estão desconectados
           if (!game.player1.connected && !game.player2.connected) {
-            console.log(`🗑️ Ambos jogadores desconectaram da partida ${gameId} - deletando partida`);
-
             // Limpar timers de ambos jogadores
             const key1 = `${gameId}_${game.player1.userId._id || game.player1.userId}`;
             const key2 = `${gameId}_${game.player2.userId._id || game.player2.userId}`;
@@ -523,13 +526,20 @@ class GameSocketService {
               this.disconnectTimers.delete(key2);
             }
 
-            // Deletar a partida da base de dados
-            await Game.findByIdAndDelete(gameId);
+            // Só deletar partidas não finalizadas (preservar histórico)
+            if (game.status !== 'finished' && game.status !== 'abandoned') {
+              console.log(`🗑️ Ambos jogadores desconectaram da partida ${gameId} - deletando partida não finalizada`);
 
-            // Notificar a sala (caso alguém ainda esteja conectado)
-            this.io.to(`game_${gameId}`).emit('game_deleted', {
-              message: 'A partida foi encerrada pois ambos os jogadores saíram.'
-            });
+              // Deletar a partida da base de dados
+              await Game.findByIdAndDelete(gameId);
+
+              // Notificar a sala (caso alguém ainda esteja conectado)
+              this.io.to(`game_${gameId}`).emit('game_deleted', {
+                message: 'A partida foi encerrada pois ambos os jogadores saíram.'
+              });
+            } else {
+              console.log(`📊 Partida ${gameId} finalizada - preservando para histórico`);
+            }
           }
         }
       } catch (error) {

@@ -459,5 +459,14 @@ const UserAPI = {
     return await apiRequest(`/users?${queryParams}`, {
       method: 'GET'
     });
+  },
+
+  /**
+   * Obter perfil público de um usuário
+   */
+  async getPublicProfile(userId) {
+    return await apiRequest(`/users/${userId}/public`, {
+      method: 'GET'
+    });
   }
 };

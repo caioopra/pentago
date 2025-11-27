@@ -36,6 +36,23 @@
             </button>
           </div>
 
+          <!-- Share Profile Section -->
+          <div style="margin-top: 20px; padding: 15px; background-color: var(--bg-secondary); border-radius: 8px; text-align: center;">
+            <h3 style="margin-bottom: 10px; font-size: 1rem; color: var(--text-primary);">Compartilhar Perfil</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 10px;">
+              Copie o link abaixo para compartilhar seu perfil público com outras pessoas
+            </p>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <input type="text" id="shareProfileLink" readonly style="flex: 1; background-color: var(--bg-primary); color: var(--text-primary); cursor: text; border: 1px solid var(--border-color);">
+              <button id="copyProfileLinkBtn" class="btn btn-info btn-small">
+                📋 Copiar Link
+              </button>
+            </div>
+            <small id="copyLinkMessage" style="color: var(--success-text); display: none; margin-top: 5px;">
+              ✓ Link copiado para a área de transferência!
+            </small>
+          </div>
+
           <!-- Profile Form -->
           <form id="profileForm" style="margin-top: 30px;">
             <div class="form-group">

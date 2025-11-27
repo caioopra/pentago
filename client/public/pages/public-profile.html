@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perfil Público - Pentago Web</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .profile-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .profile-header {
+      text-align: center;
+      padding: 2rem;
+      background: var(--bg-secondary);
+      border-radius: 12px;
+      margin-bottom: 2rem;
+    }
+
+    .profile-avatar {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid var(--accent-color);
+      margin-bottom: 1rem;
+    }
+
+    .profile-name {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .profile-location {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .profile-rank {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: var(--accent-color);
+      color: white;
+      border-radius: 20px;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .profile-score {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--accent-color);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--bg-secondary);
+      padding: 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: var(--accent-color);
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .win-rate {
+      font-size: 3rem;
+      font-weight: bold;
+      background: linear-gradient(45deg, var(--accent-color), var(--accent-hover));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .info-section {
+      background: var(--bg-secondary);
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .info-value {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+    }
+
+    .error-message {
+      text-align: center;
+      padding: 2rem;
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      border-radius: 8px;
+      color: var(--error-text);
+    }
+
+    .game-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem;
+      background: var(--bg-primary);
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .game-players {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+    }
+
+    .game-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    .game-player-name {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .game-vs {
+      margin: 0 0.5rem;
+      color: var(--text-secondary);
+      font-weight: bold;
+    }
+
+    .game-result {
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .game-result.win {
+      background: var(--success-bg);
+      color: var(--success-text);
+    }
+
+    .game-result.loss {
+      background: var(--error-bg);
+      color: var(--error-text);
+    }
+
+    .game-result.draw {
+      background: var(--warning-bg);
+      color: var(--warning-text);
+    }
+
+    .game-date {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      margin-left: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .game-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+      }
+
+      .game-date {
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>🎮 Pentago Web</h1>
+      <a href="/pages/index.html" class="btn-back">← Voltar</a>
+    </header>
+
+    <main>
+      <div id="loadingMessage" class="loading">
+        Carregando perfil...
+      </div>
+
+      <div id="errorMessage" class="error-message" style="display: none;">
+        Usuário não encontrado.
+      </div>
+
+      <div id="profileContent" class="profile-container" style="display: none;">
+        <!-- Profile Header -->
+        <div class="profile-header">
+          <img id="profileAvatar" src="/assets/img/avatars/default.png" alt="Avatar" class="profile-avatar">
+          <div class="profile-name" id="profileName">-</div>
+          <div class="profile-location" id="profileLocation">-</div>
+          <div class="profile-rank" id="profileRank">#- no Ranking</div>
+          <div class="profile-score" id="profileScore">0 pontos</div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Estatísticas de Jogo</h2>
+          </div>
+          <div class="card-body">
+            <div class="stats-grid">
+              <div class="stat-card">
+                <span class="stat-value" id="totalGames">0</span>
+                <span class="stat-label">Partidas</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-value" style="color: var(--success-text);" id="wins">0</span>
+                <span class="stat-label">Vitórias</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-value" style="color: var(--error-text);" id="losses">0</span>
+                <span class="stat-label">Derrotas</span>
+              </div>
+              <div class="stat-card">
+                <span class="stat-value" style="color: var(--text-secondary);" id="draws">0</span>
+                <span class="stat-label">Empates</span>
+              </div>
+            </div>
+
+            <div class="stat-card" style="margin-top: 1rem;">
+              <span class="win-rate" id="winRate">0%</span>
+              <span class="stat-label">Taxa de Vitória</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Info -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Informações</h2>
+          </div>
+          <div class="card-body">
+            <div class="info-section">
+              <div class="info-row">
+                <span class="info-label">Membro desde:</span>
+                <span class="info-value" id="memberSince">-</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Games -->
+        <div class="card" id="recentGamesSection" style="display: none;">
+          <div class="card-header">
+            <h2 class="card-title">Partidas Recentes</h2>
+          </div>
+          <div class="card-body">
+            <div id="recentGamesList"></div>
+            <div id="noGamesMessage" style="display: none; text-align: center; padding: 2rem; color: var(--text-secondary);">
+              Nenhuma partida finalizada ainda.
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>&copy; 2024 Pentago Web - INE5646 UFSC</p>
+    </footer>
+  </div>
+
+  <script src="/js/utils/api.js"></script>
+  <script src="/js/utils/theme.js"></script>
+  <script src="/js/pages/public-profile.js"></script>
+</body>
+
+</html>

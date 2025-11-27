@@ -21,6 +21,9 @@ const avatarInput = document.getElementById('avatarInput');
 const avatarPreview = document.getElementById('avatarPreview');
 const uploadAvatarBtn = document.getElementById('uploadAvatarBtn');
 const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+const shareProfileLink = document.getElementById('shareProfileLink');
+const copyProfileLinkBtn = document.getElementById('copyProfileLinkBtn');
+const copyLinkMessage = document.getElementById('copyLinkMessage');
 
 // Form fields
 const nameInput = document.getElementById('name');
@@ -283,6 +286,55 @@ deleteAccountBtn.addEventListener('click', async () => {
     deleteAccountBtn.textContent = 'Deletar Conta';
   }
 });
+
+/**
+ * Initialize share profile link
+ */
+function initShareProfileLink() {
+  const publicProfileUrl = `${window.location.origin}/pages/public-profile.html?id=${currentUser._id}`;
+  shareProfileLink.value = publicProfileUrl;
+}
+
+/**
+ * Copy profile link to clipboard
+ */
+copyProfileLinkBtn.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(shareProfileLink.value);
+
+    // Show success message
+    copyLinkMessage.style.display = 'block';
+    copyProfileLinkBtn.textContent = '✓ Copiado!';
+
+    // Reset after 3 seconds
+    setTimeout(() => {
+      copyLinkMessage.style.display = 'none';
+      copyProfileLinkBtn.textContent = '📋 Copiar Link';
+    }, 3000);
+  } catch (error) {
+    console.error('Erro ao copiar link:', error);
+
+    // Fallback: select text for manual copy
+    shareProfileLink.select();
+    shareProfileLink.setSelectionRange(0, 99999); // For mobile devices
+
+    try {
+      document.execCommand('copy');
+      copyLinkMessage.style.display = 'block';
+      copyProfileLinkBtn.textContent = '✓ Copiado!';
+
+      setTimeout(() => {
+        copyLinkMessage.style.display = 'none';
+        copyProfileLinkBtn.textContent = '📋 Copiar Link';
+      }, 3000);
+    } catch (fallbackError) {
+      alert('Não foi possível copiar automaticamente. Por favor, copie o link manualmente.');
+    }
+  }
+});
+
+// Initialize share profile link
+initShareProfileLink();
 
 // Load profile data on page load
 loadProfile();

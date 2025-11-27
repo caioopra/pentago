@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Game = require('../models/Game');
 const path = require('path');
 const fs = require('fs').promises;
 
@@ -313,6 +314,135 @@ exports.getFullLeaderboard = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Erro ao buscar placar.'
+    });
+  }
+};
+
+/**
+ * @desc    Get public user profile with statistics
+ * @route   GET /api/users/:id/public
+ * @access  Public
+ */
+exports.getPublicProfile = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    // Get user data (only public fields)
+    const user = await User.findById(userId).select('name avatar score city state country createdAt');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado.'
+      });
+    }
+
+    // Calculate game statistics
+    const totalGames = await Game.countDocuments({
+      $or: [
+        { 'player1.userId': userId },
+        { 'player2.userId': userId }
+      ],
+      status: 'finished'
+    });
+
+    const wins = await Game.countDocuments({
+      winner: userId,
+      status: 'finished'
+    });
+
+    const draws = await Game.countDocuments({
+      $or: [
+        { 'player1.userId': userId },
+        { 'player2.userId': userId }
+      ],
+      status: 'finished',
+      result: 'draw'
+    });
+
+    const losses = totalGames - wins - draws;
+
+    // Calculate win rate
+    const winRate = totalGames > 0 ? ((wins / totalGames) * 100).toFixed(1) : 0;
+
+    // Get user's rank
+    const higherRankedUsers = await User.countDocuments({
+      score: { $gt: user.score }
+    });
+    const rank = higherRankedUsers + 1;
+
+    // Get recent games (last 5)
+    const recentGames = await Game.find({
+      $or: [
+        { 'player1.userId': userId },
+        { 'player2.userId': userId }
+      ],
+      status: 'finished'
+    })
+      .populate('player1.userId', 'name avatar')
+      .populate('player2.userId', 'name avatar')
+      .populate('winner', 'name')
+      .sort({ updatedAt: -1 })
+      .limit(5)
+      .select('player1 player2 winner result updatedAt');
+
+    res.status(200).json({
+      success: true,
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          avatar: user.avatar,
+          score: user.score,
+          location: {
+            city: user.city,
+            state: user.state,
+            country: user.country
+          },
+          memberSince: user.createdAt,
+          rank
+        },
+        statistics: {
+          totalGames,
+          wins,
+          losses,
+          draws,
+          winRate: parseFloat(winRate)
+        },
+        recentGames: recentGames.map(game => ({
+          id: game._id,
+          player1: {
+            id: game.player1.userId._id,
+            name: game.player1.userId.name,
+            avatar: game.player1.userId.avatar
+          },
+          player2: {
+            id: game.player2.userId._id,
+            name: game.player2.userId.name,
+            avatar: game.player2.userId.avatar
+          },
+          winner: game.winner ? {
+            id: game.winner._id,
+            name: game.winner.name
+          } : null,
+          result: game.result,
+          date: game.updatedAt
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao buscar perfil público:', error);
+
+    if (error.kind === 'ObjectId') {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado.'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao buscar perfil público.'
     });
   }
 };

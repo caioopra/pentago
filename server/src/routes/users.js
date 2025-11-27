@@ -11,12 +11,14 @@ const {
   updateAvatar,
   deleteUser,
   getLeaderboard,
-  getFullLeaderboard
+  getFullLeaderboard,
+  getPublicProfile
 } = require('../controllers/userController');
 
 // Public routes
 router.get('/leaderboard/full', getFullLeaderboard);
 router.get('/leaderboard', getLeaderboard);
+router.get('/:id/public', getPublicProfile);
 
 // Protected routes
 router.use(protect); // All routes below require authentication
