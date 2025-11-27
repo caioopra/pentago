@@ -74,7 +74,10 @@ exports.getUser = async (req, res) => {
 
     // Buscar estatísticas de jogos do usuário
     const gamesPlayed = await Game.countDocuments({
-      $or: [{ user1: user._id }, { user2: user._id }],
+      $or: [
+        { 'player1.userId': user._id },
+        { 'player2.userId': user._id }
+      ],
       status: 'finished'
     });
 
@@ -467,8 +470,8 @@ exports.getGames = async (req, res) => {
     }
 
     const games = await Game.find(filter)
-      .populate('user1', 'name email avatar')
-      .populate('user2', 'name email avatar')
+      .populate('player1.userId', 'name email avatar')
+      .populate('player2.userId', 'name email avatar')
       .populate('winner', 'name')
       .sort({ createdAt: -1 })
       .skip(skip)
