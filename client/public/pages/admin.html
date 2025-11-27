@@ -225,9 +225,10 @@
 
     .config-item {
       display: flex;
-      justify-content: space-between;
-      padding: 8px 0;
+      flex-direction: column;
+      padding: 12px 0;
       border-bottom: 1px solid var(--border-color);
+      gap: 8px;
     }
 
     .config-item:last-child {
@@ -236,8 +237,8 @@
 
     .config-label {
       color: var(--text-secondary);
-      flex-shrink: 0;
-      min-width: 200px;
+      font-size: 14px;
+      font-weight: 500;
     }
 
     .config-value {
@@ -245,24 +246,55 @@
     }
 
     .config-item input[type="number"],
-    .config-item input[type="text"],
-    .config-item input[type="file"] {
-      padding: 6px 12px;
+    .config-item input[type="text"] {
+      padding: 8px 12px;
       border: 1px solid var(--border-color);
       border-radius: 4px;
       background: var(--bg-primary);
       color: var(--text-primary);
       font-size: 14px;
-      max-width: 200px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .config-item input[type="file"] {
-      max-width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 14px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .config-item input:focus {
       outline: none;
       border-color: var(--accent-color);
+    }
+
+    .config-item > div {
+      width: 100%;
+    }
+
+    .avatar-upload-wrapper {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .avatar-upload-wrapper img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .avatar-upload-wrapper input[type="file"] {
+      flex: 1;
+      min-width: 0;
     }
 
     .top-players-list {
@@ -543,9 +575,9 @@
                   <h4>Avatar Padrao</h4>
                   <div class="config-item">
                     <label class="config-label" for="defaultAvatar">Imagem do avatar:</label>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                      <img id="defaultAvatarPreview" src="/assets/img/avatars/default.png" alt="Avatar padrao" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
-                      <input type="file" id="defaultAvatarUpload" accept="image/*" style="flex: 1;">
+                    <div class="avatar-upload-wrapper">
+                      <img id="defaultAvatarPreview" src="/assets/img/avatars/default.png" alt="Avatar padrao">
+                      <input type="file" id="defaultAvatarUpload" accept="image/*">
                     </div>
                   </div>
                   <div class="config-item">

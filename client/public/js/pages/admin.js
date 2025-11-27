@@ -709,7 +709,7 @@ async function updateConfig(configData) {
   try {
     const response = await apiRequest('/admin/config', {
       method: 'PUT',
-      body: JSON.stringify(configData)
+      body: configData  // apiRequest will stringify this automatically
     });
 
     if (response.success) {
@@ -730,12 +730,26 @@ async function uploadDefaultAvatar(file) {
     const formData = new FormData();
     formData.append('avatar', file);
 
+    // Get CSRF token
+    let csrfToken = AuthManager.getCsrfToken();
+    if (!csrfToken) {
+      csrfToken = await AuthManager.fetchCsrfToken();
+    }
+
+    const headers = {
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    };
+
+    // Add CSRF token if available
+    if (csrfToken) {
+      headers['x-csrf-token'] = csrfToken;
+    }
+
     const response = await fetch(`${API_BASE_URL}/upload/avatar`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
-      },
-      body: formData
+      headers: headers,
+      body: formData,
+      credentials: 'include'
     });
 
     const data = await response.json();
