@@ -38,6 +38,10 @@ class PentagoGameClient {
     this.webrtcManager = null;
     this.videoChatOpen = false;
 
+    // Disconnect warning tracking
+    this.disconnectWarningInterval = null;
+    this.disconnectTimeRemaining = null;
+
     // Inicializar
     this.init();
   }
@@ -157,7 +161,29 @@ class PentagoGameClient {
     // Evento: Oponente desconectou
     this.socket.on('opponent_disconnected', (data) => {
       console.log('⚠️ Oponente desconectou');
-      this.showMessage('Oponente desconectou. Aguardando reconexão...', 'warning');
+      const waitTime = data.waitTime || 15;
+      this.showDisconnectWarning(waitTime);
+    });
+
+    // Evento: Oponente reconectou
+    this.socket.on('opponent_reconnected', (data) => {
+      console.log('✅ Oponente reconectou');
+      this.clearDisconnectWarning();
+      this.showMessage('Oponente reconectou! A partida continua.', 'success');
+      setTimeout(() => this.hideMessage(), 3000);
+    });
+
+    // Evento: Timeout de desconexão (15 segundos)
+    this.socket.on('disconnect_timeout', (data) => {
+      console.log('⏱️ Timeout de desconexão:', data);
+      this.clearDisconnectWarning();
+      this.showMessage(data.message, 'info');
+
+      // Atualizar UI para mostrar fim de jogo
+      setTimeout(() => {
+        this.showMessage(`${data.winner.username} venceu por W.O. (desconexão do oponente)!`, 'success');
+        this.disableGameControls();
+      }, 2000);
     });
 
     // Evento: Timeout de jogador por inatividade
@@ -793,6 +819,46 @@ class PentagoGameClient {
    */
   hideMessage() {
     document.getElementById('gameMessage').classList.add('hidden');
+  }
+
+  /**
+   * Mostrar aviso de desconexão com contagem regressiva
+   */
+  showDisconnectWarning(totalSeconds) {
+    // Limpar warning anterior se existir
+    this.clearDisconnectWarning();
+
+    // Variável para rastrear os segundos restantes
+    this.disconnectTimeRemaining = totalSeconds;
+
+    // Mostrar mensagem inicial
+    const message = `Oponente desconectou! Aguardando reconexão... (${this.disconnectTimeRemaining}s)`;
+    this.showMessage(message, 'warning');
+
+    // Atualizar a cada segundo
+    this.disconnectWarningInterval = setInterval(() => {
+      this.disconnectTimeRemaining--;
+
+      if (this.disconnectTimeRemaining > 0) {
+        const message = `Oponente desconectou! Aguardando reconexão... (${this.disconnectTimeRemaining}s)`;
+        this.showMessage(message, 'warning');
+      } else {
+        // Tempo esgotado
+        this.showMessage('Oponente não reconectou. Você venceu a partida!', 'success');
+        this.clearDisconnectWarning();
+      }
+    }, 1000);
+  }
+
+  /**
+   * Limpar aviso de desconexão
+   */
+  clearDisconnectWarning() {
+    if (this.disconnectWarningInterval) {
+      clearInterval(this.disconnectWarningInterval);
+      this.disconnectWarningInterval = null;
+    }
+    this.disconnectTimeRemaining = null;
   }
 
   /**

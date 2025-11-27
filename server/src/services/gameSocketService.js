@@ -15,9 +15,11 @@ class GameSocketService {
   constructor(io) {
     this.io = io;
     this.connectedPlayers = new Map(); // socketId -> { userId, gameId }
+    this.disconnectTimers = new Map(); // gameId_userId -> { timer, startTime }
     this.queueService = new QueueService(io);
     this.chatService = new ChatService(io);
     this.inactivityService = new InactivityService(io);
+    this.disconnectTimeout = 15000; // 15 seconds
   }
 
   /**
@@ -192,6 +194,14 @@ class GameSocketService {
         gameId: gameId
       });
 
+      // Limpar timer de desconexão se existir (player reconectou)
+      const disconnectKey = `${gameId}_${socket.userId}`;
+      if (this.disconnectTimers.has(disconnectKey)) {
+        clearTimeout(this.disconnectTimers.get(disconnectKey).timer);
+        this.disconnectTimers.delete(disconnectKey);
+        console.log(`✅ Jogador ${playerNumber} reconectou à partida ${gameId}`);
+      }
+
       // Iniciar rastreamento de inatividade
       this.inactivityService.trackPlayer(gameId, socket.userId);
 
@@ -204,8 +214,8 @@ class GameSocketService {
         playerNumber
       });
 
-      // Notificar o oponente
-      socket.to(`game_${gameId}`).emit('opponent_connected', {
+      // Notificar o oponente sobre reconexão
+      socket.to(`game_${gameId}`).emit('opponent_reconnected', {
         playerNumber
       });
 
@@ -459,7 +469,9 @@ class GameSocketService {
       const { gameId, userId } = playerInfo;
 
       try {
-        const game = await Game.findById(gameId);
+        const game = await Game.findById(gameId)
+          .populate('player1.userId', 'name')
+          .populate('player2.userId', 'name');
 
         if (game && game.isActive()) {
           const playerNumber = game.getPlayerNumber(userId);
@@ -472,19 +484,44 @@ class GameSocketService {
 
           await game.save();
 
-          // Parar de rastrear jogador (timeout vai lidar com a desconexão)
+          // Parar de rastrear jogador (disconnect timer vai lidar com a desconexão)
           this.inactivityService.untrackPlayer(gameId, userId);
 
-          // Notificar oponente da desconexão
+          // Notificar oponente da desconexão com timer de 15 segundos
           socket.to(`game_${gameId}`).emit('opponent_disconnected', {
-            playerNumber
+            playerNumber,
+            waitTime: 15 // seconds
           });
 
-          console.log(`⚠️ Jogador ${playerNumber} desconectou da partida ${gameId}`);
+          console.log(`⚠️ Jogador ${playerNumber} desconectou da partida ${gameId} - iniciando timer de 15s`);
+
+          // Iniciar timer de 15 segundos para declarar vitória do oponente
+          const disconnectKey = `${gameId}_${userId}`;
+          const timer = setTimeout(async () => {
+            await this.handleDisconnectTimeout(gameId, userId, playerNumber);
+          }, this.disconnectTimeout);
+
+          this.disconnectTimers.set(disconnectKey, {
+            timer,
+            startTime: Date.now()
+          });
 
           // Verificar se ambos jogadores estão desconectados
           if (!game.player1.connected && !game.player2.connected) {
             console.log(`🗑️ Ambos jogadores desconectaram da partida ${gameId} - deletando partida`);
+
+            // Limpar timers de ambos jogadores
+            const key1 = `${gameId}_${game.player1.userId._id || game.player1.userId}`;
+            const key2 = `${gameId}_${game.player2.userId._id || game.player2.userId}`;
+
+            if (this.disconnectTimers.has(key1)) {
+              clearTimeout(this.disconnectTimers.get(key1).timer);
+              this.disconnectTimers.delete(key1);
+            }
+            if (this.disconnectTimers.has(key2)) {
+              clearTimeout(this.disconnectTimers.get(key2).timer);
+              this.disconnectTimers.delete(key2);
+            }
 
             // Deletar a partida da base de dados
             await Game.findByIdAndDelete(gameId);
@@ -500,6 +537,97 @@ class GameSocketService {
       }
 
       this.connectedPlayers.delete(socket.id);
+    }
+  }
+
+  /**
+   * Lidar com timeout de desconexão (15 segundos)
+   */
+  async handleDisconnectTimeout(gameId, disconnectedUserId, disconnectedPlayerNumber) {
+    try {
+      console.log(`⏱️ Timeout de desconexão atingido para jogador ${disconnectedPlayerNumber} na partida ${gameId}`);
+
+      const game = await Game.findById(gameId)
+        .populate('player1.userId', 'name')
+        .populate('player2.userId', 'name');
+
+      if (!game) {
+        console.log(`Game ${gameId} não encontrado para timeout de desconexão`);
+        return;
+      }
+
+      // Só processar se o jogo ainda estiver ativo
+      if (!game.isActive()) {
+        console.log(`Game ${gameId} não está mais ativo`);
+        return;
+      }
+
+      // Verificar se o jogador ainda está desconectado
+      const isPlayer1 = disconnectedPlayerNumber === 1;
+      const stillDisconnected = isPlayer1 ? !game.player1.connected : !game.player2.connected;
+
+      if (!stillDisconnected) {
+        console.log(`Jogador ${disconnectedPlayerNumber} reconectou antes do timeout`);
+        return;
+      }
+
+      // Determinar o vencedor (o jogador que ainda está conectado)
+      const player1Id = game.player1.userId._id || game.player1.userId;
+      const player2Id = game.player2.userId._id || game.player2.userId;
+      const winnerId = isPlayer1 ? player2Id : player1Id;
+      const disconnectedPlayerName = isPlayer1
+        ? (game.player1.userId.name || 'Jogador 1')
+        : (game.player2.userId.name || 'Jogador 2');
+      const winnerName = isPlayer1
+        ? (game.player2.userId.name || 'Jogador 2')
+        : (game.player1.userId.name || 'Jogador 1');
+
+      // Atualizar estado do jogo
+      game.status = 'finished';
+      game.winner = winnerId;
+      game.result = isPlayer1 ? 'player2_win' : 'player1_win';
+      await game.save();
+
+      // Atualizar pontuação do vencedor (+3 pontos)
+      const User = require('../models/User');
+      await User.findByIdAndUpdate(winnerId, { $inc: { score: 3 } });
+      console.log(`📊 ${winnerName} recebeu +3 pontos por vitória (desconexão do oponente)`);
+
+      // Notificar ambos jogadores via Socket.io
+      this.io.to(`game_${gameId}`).emit('disconnect_timeout', {
+        gameId,
+        disconnectedPlayer: {
+          id: disconnectedUserId.toString(),
+          playerNumber: disconnectedPlayerNumber,
+          username: disconnectedPlayerName
+        },
+        winner: {
+          id: winnerId.toString(),
+          playerNumber: isPlayer1 ? 2 : 1,
+          username: winnerName
+        },
+        message: `${disconnectedPlayerName} não reconectou a tempo. ${winnerName} venceu a partida!`
+      });
+
+      // Notificar espectadores
+      this.io.emit('spectator_game_over', {
+        gameId,
+        winner: winnerId,
+        draw: false,
+        game
+      });
+
+      // Limpar timer
+      const disconnectKey = `${gameId}_${disconnectedUserId}`;
+      this.disconnectTimers.delete(disconnectKey);
+
+      // Parar de rastrear ambos os jogadores
+      this.inactivityService.untrackPlayer(gameId, player1Id.toString());
+      this.inactivityService.untrackPlayer(gameId, player2Id.toString());
+
+      console.log(`🏁 Partida ${gameId} finalizada por desconexão. Vencedor: ${winnerName}`);
+    } catch (error) {
+      console.error('Erro ao processar timeout de desconexão:', error);
     }
   }
 
