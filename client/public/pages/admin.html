@@ -236,10 +236,33 @@
 
     .config-label {
       color: var(--text-secondary);
+      flex-shrink: 0;
+      min-width: 200px;
     }
 
     .config-value {
       font-weight: bold;
+    }
+
+    .config-item input[type="number"],
+    .config-item input[type="text"],
+    .config-item input[type="file"] {
+      padding: 6px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 14px;
+      max-width: 200px;
+    }
+
+    .config-item input[type="file"] {
+      max-width: 100%;
+    }
+
+    .config-item input:focus {
+      outline: none;
+      border-color: var(--accent-color);
     }
 
     .top-players-list {
@@ -510,62 +533,75 @@
           </div>
           <div class="card-body">
             <p style="margin-bottom: 20px; color: var(--text-secondary);">
-              As configuracoes abaixo sao definidas no arquivo .env do servidor. Para altera-las, edite o arquivo e reinicie o servidor.
+              Gerencie as configuracoes do sistema. Alteracoes entram em vigor imediatamente.
             </p>
 
-            <div class="config-grid" id="configGrid">
-              <div class="config-section">
-                <h4>Configuracoes do Jogo</h4>
-                <div class="config-item">
-                  <span class="config-label">Tamanho max. da fila:</span>
-                  <span class="config-value" id="configMaxQueue">-</span>
+            <form id="configForm">
+              <div class="config-grid">
+                <!-- Avatar Padrao -->
+                <div class="config-section">
+                  <h4>Avatar Padrao</h4>
+                  <div class="config-item">
+                    <label class="config-label" for="defaultAvatar">Imagem do avatar:</label>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                      <img id="defaultAvatarPreview" src="/assets/img/avatars/default.png" alt="Avatar padrao" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;">
+                      <input type="file" id="defaultAvatarUpload" accept="image/*" style="flex: 1;">
+                    </div>
+                  </div>
+                  <div class="config-item">
+                    <label class="config-label">URL atual:</label>
+                    <span class="config-value" id="defaultAvatarUrl">-</span>
+                  </div>
                 </div>
-                <div class="config-item">
-                  <span class="config-label">Timeout de inatividade:</span>
-                  <span class="config-value" id="configInactivity">-</span>
+
+                <!-- Configuracoes do Jogo -->
+                <div class="config-section">
+                  <h4>Configuracoes do Jogo</h4>
+                  <div class="config-item">
+                    <label class="config-label" for="maxQueueSize">Tamanho max. da fila:</label>
+                    <input type="number" id="maxQueueSize" name="maxQueueSize" min="2" max="100" required>
+                  </div>
+                  <div class="config-item">
+                    <label class="config-label" for="inactivityTimeout">Timeout de inatividade (s):</label>
+                    <input type="number" id="inactivityTimeout" name="inactivityTimeout" min="10" max="300" required>
+                  </div>
                 </div>
-                <div class="config-item">
-                  <span class="config-label">Duracao max. do jogo:</span>
-                  <span class="config-value" id="configMaxDuration">-</span>
+
+                <!-- Configuracoes de Video -->
+                <div class="config-section">
+                  <h4>Configuracoes de Video</h4>
+                  <div class="config-item">
+                    <label class="config-label" for="videoMaxAge">Idade max. do video (dias):</label>
+                    <input type="number" id="videoMaxAge" name="videoMaxAge" min="1" max="90" required>
+                  </div>
+                  <div class="config-item">
+                    <label class="config-label" for="videoMaxSize">Tamanho max. (GB):</label>
+                    <input type="number" id="videoMaxSize" name="videoMaxSize" min="0.1" max="10" step="0.1" required>
+                  </div>
+                  <div class="config-item">
+                    <label class="config-label" for="videoFps">FPS:</label>
+                    <input type="number" id="videoFps" name="videoFps" min="15" max="60" required>
+                  </div>
+                  <div class="config-item">
+                    <label class="config-label" for="videoBitrate">Bitrate:</label>
+                    <input type="text" id="videoBitrate" name="videoBitrate" placeholder="4000k" required>
+                  </div>
+                </div>
+
+                <!-- Limites de Upload -->
+                <div class="config-section">
+                  <h4>Limites de Upload</h4>
+                  <div class="config-item">
+                    <label class="config-label" for="uploadMaxSize">Upload max. (MB):</label>
+                    <input type="number" id="uploadMaxSize" name="uploadMaxSize" min="1" max="50" required>
+                  </div>
                 </div>
               </div>
 
-              <div class="config-section">
-                <h4>Configuracoes de Video</h4>
-                <div class="config-item">
-                  <span class="config-label">Idade max. do video:</span>
-                  <span class="config-value" id="configVideoAge">-</span>
-                </div>
-                <div class="config-item">
-                  <span class="config-label">Tamanho max.:</span>
-                  <span class="config-value" id="configVideoSize">-</span>
-                </div>
-                <div class="config-item">
-                  <span class="config-label">FPS:</span>
-                  <span class="config-value" id="configVideoFps">-</span>
-                </div>
-                <div class="config-item">
-                  <span class="config-label">Bitrate:</span>
-                  <span class="config-value" id="configVideoBitrate">-</span>
-                </div>
+              <div style="margin-top: 20px; text-align: right;">
+                <button type="submit" class="btn btn-primary">Salvar Configuracoes</button>
               </div>
-
-              <div class="config-section">
-                <h4>Limites</h4>
-                <div class="config-item">
-                  <span class="config-label">Upload max.:</span>
-                  <span class="config-value" id="configUploadSize">-</span>
-                </div>
-                <div class="config-item">
-                  <span class="config-label">Rate limit (janela):</span>
-                  <span class="config-value" id="configRateWindow">-</span>
-                </div>
-                <div class="config-item">
-                  <span class="config-label">Rate limit (max):</span>
-                  <span class="config-value" id="configRateMax">-</span>
-                </div>
-              </div>
-            </div>
+            </form>
           </div>
         </div>
       </div>

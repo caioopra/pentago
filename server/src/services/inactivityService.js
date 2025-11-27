@@ -1,4 +1,5 @@
 const Game = require('../models/Game');
+const Config = require('../models/Config');
 
 /**
  * Service to track player inactivity and disconnect inactive players
@@ -8,9 +9,25 @@ class InactivityService {
     this.io = io;
     this.playerActivity = new Map(); // Map<gameId_userId, timestamp>
     this.checkInterval = null;
-    this.timeoutSeconds = parseInt(process.env.INACTIVITY_TIMEOUT_SECONDS) || 60;
+    this.timeoutSeconds = 60; // Default value
+
+    // Load config from database
+    this.loadConfig();
 
     console.log(`InactivityService initialized with ${this.timeoutSeconds}s timeout`);
+  }
+
+  /**
+   * Load configuration from database
+   */
+  async loadConfig() {
+    try {
+      const config = await Config.getConfig();
+      this.timeoutSeconds = config.inactivity.timeoutSeconds;
+      console.log(`InactivityService config reloaded: ${this.timeoutSeconds}s timeout`);
+    } catch (error) {
+      console.error('Error loading InactivityService config:', error);
+    }
   }
 
   /**

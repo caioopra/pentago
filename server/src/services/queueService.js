@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const Game = require('../models/Game');
+const Config = require('../models/Config');
 
 /**
  * Serviço de Fila de Jogadores
@@ -10,9 +11,25 @@ class QueueService {
   constructor(io) {
     this.io = io;
     this.queue = []; // Array de objetos: { userId, socketId, username, avatar, joinedAt }
-    this.maxQueueSize = parseInt(process.env.MAX_QUEUE_SIZE) || 25;
+    this.maxQueueSize = 25; // Default value
     this.pendingMatches = new Map(); // matchId -> { player1, player2, confirmations, timer, gameId }
     this.confirmationTimeout = 30000; // 30 seconds
+
+    // Load config from database
+    this.loadConfig();
+  }
+
+  /**
+   * Load configuration from database
+   */
+  async loadConfig() {
+    try {
+      const config = await Config.getConfig();
+      this.maxQueueSize = config.queue.maxSize;
+      console.log(`QueueService config reloaded: max ${this.maxQueueSize} players`);
+    } catch (error) {
+      console.error('Error loading QueueService config:', error);
+    }
   }
 
   /**

@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Game = require('../models/Game');
+const Config = require('../models/Config');
 
 /**
  * @desc    Obter todos os usuários (com paginação e filtros)
@@ -419,28 +420,17 @@ exports.getStats = async (req, res) => {
  */
 exports.getConfig = async (req, res) => {
   try {
-    // Retornar configurações atuais do sistema
+    const config = await Config.getConfig();
+
     res.json({
       success: true,
       data: {
-        game: {
-          maxQueueSize: parseInt(process.env.MAX_QUEUE_SIZE, 10) || 25,
-          inactivityTimeout: parseInt(process.env.INACTIVITY_TIMEOUT_SECONDS, 10) || 60,
-          maxGameDuration: parseInt(process.env.MAX_GAME_DURATION_MINUTES, 10) || 60
-        },
-        video: {
-          maxAgeDays: parseInt(process.env.MAX_VIDEO_AGE_DAYS, 10) || 15,
-          maxSizeGB: parseInt(process.env.MAX_VIDEO_SIZE_GB, 10) || 1,
-          fps: parseInt(process.env.VIDEO_FPS, 10) || 24,
-          bitrate: process.env.VIDEO_BITRATE || '4000k'
-        },
-        upload: {
-          maxSizeMB: parseInt(process.env.MAX_UPLOAD_SIZE_MB, 10) || 10
-        },
-        rateLimit: {
-          windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 900000,
-          maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 100
-        }
+        defaultAvatar: config.defaultAvatar,
+        inactivity: config.inactivity,
+        queue: config.queue,
+        video: config.video,
+        upload: config.upload,
+        rateLimit: config.rateLimit
       }
     });
   } catch (error) {
@@ -448,6 +438,122 @@ exports.getConfig = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Erro ao obter configurações.'
+    });
+  }
+};
+
+/**
+ * @desc    Atualizar configurações do sistema
+ * @route   PUT /api/admin/config
+ * @access  Private/Admin
+ */
+exports.updateConfig = async (req, res) => {
+  try {
+    const updates = {};
+
+    // Validar e preparar updates
+    if (req.body.defaultAvatar !== undefined) {
+      updates.defaultAvatar = req.body.defaultAvatar;
+    }
+
+    if (req.body.inactivity) {
+      updates.inactivity = {};
+      if (req.body.inactivity.timeoutSeconds !== undefined) {
+        const timeout = parseInt(req.body.inactivity.timeoutSeconds, 10);
+        if (timeout < 10 || timeout > 300) {
+          return res.status(400).json({
+            success: false,
+            message: 'Tempo de inatividade deve estar entre 10 e 300 segundos.'
+          });
+        }
+        updates.inactivity.timeoutSeconds = timeout;
+      }
+    }
+
+    if (req.body.queue) {
+      updates.queue = {};
+      if (req.body.queue.maxSize !== undefined) {
+        const maxSize = parseInt(req.body.queue.maxSize, 10);
+        if (maxSize < 2 || maxSize > 100) {
+          return res.status(400).json({
+            success: false,
+            message: 'Tamanho máximo da fila deve estar entre 2 e 100.'
+          });
+        }
+        updates.queue.maxSize = maxSize;
+      }
+    }
+
+    if (req.body.video) {
+      updates.video = {};
+      if (req.body.video.maxAgeDays !== undefined) {
+        const maxAge = parseInt(req.body.video.maxAgeDays, 10);
+        if (maxAge < 1 || maxAge > 90) {
+          return res.status(400).json({
+            success: false,
+            message: 'Idade máxima do vídeo deve estar entre 1 e 90 dias.'
+          });
+        }
+        updates.video.maxAgeDays = maxAge;
+      }
+      if (req.body.video.maxSizeGB !== undefined) {
+        const maxSize = parseFloat(req.body.video.maxSizeGB);
+        if (maxSize < 0.1 || maxSize > 10) {
+          return res.status(400).json({
+            success: false,
+            message: 'Tamanho máximo do vídeo deve estar entre 0.1 e 10 GB.'
+          });
+        }
+        updates.video.maxSizeGB = maxSize;
+      }
+      if (req.body.video.fps !== undefined) {
+        const fps = parseInt(req.body.video.fps, 10);
+        if (fps < 15 || fps > 60) {
+          return res.status(400).json({
+            success: false,
+            message: 'FPS deve estar entre 15 e 60.'
+          });
+        }
+        updates.video.fps = fps;
+      }
+      if (req.body.video.bitrate !== undefined) {
+        updates.video.bitrate = req.body.video.bitrate;
+      }
+    }
+
+    if (req.body.upload) {
+      updates.upload = {};
+      if (req.body.upload.maxSizeMB !== undefined) {
+        const maxSize = parseInt(req.body.upload.maxSizeMB, 10);
+        if (maxSize < 1 || maxSize > 50) {
+          return res.status(400).json({
+            success: false,
+            message: 'Tamanho máximo de upload deve estar entre 1 e 50 MB.'
+          });
+        }
+        updates.upload.maxSizeMB = maxSize;
+      }
+    }
+
+    const config = await Config.updateConfig(updates);
+
+    res.json({
+      success: true,
+      message: 'Configurações atualizadas com sucesso.',
+      data: {
+        defaultAvatar: config.defaultAvatar,
+        inactivity: config.inactivity,
+        queue: config.queue,
+        video: config.video,
+        upload: config.upload,
+        rateLimit: config.rateLimit
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao atualizar configurações:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro ao atualizar configurações.'
     });
   }
 };

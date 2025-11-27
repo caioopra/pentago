@@ -20,6 +20,7 @@ router.put('/users/:id/demote', adminValidation.userAction, adminController.demo
 // Rotas de estatísticas e configurações
 router.get('/stats', adminController.getStats);
 router.get('/config', adminController.getConfig);
+router.put('/config', adminController.updateConfig);
 
 // Rotas de jogos
 router.get('/games', adminValidation.getGames, adminController.getGames);

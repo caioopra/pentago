@@ -225,6 +225,55 @@ function setupEventListeners() {
         break;
     }
   });
+
+  // Config form submission
+  document.getElementById('configForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const formData = {
+      queue: {
+        maxSize: parseInt(document.getElementById('maxQueueSize').value, 10)
+      },
+      inactivity: {
+        timeoutSeconds: parseInt(document.getElementById('inactivityTimeout').value, 10)
+      },
+      video: {
+        maxAgeDays: parseInt(document.getElementById('videoMaxAge').value, 10),
+        maxSizeGB: parseFloat(document.getElementById('videoMaxSize').value),
+        fps: parseInt(document.getElementById('videoFps').value, 10),
+        bitrate: document.getElementById('videoBitrate').value
+      },
+      upload: {
+        maxSizeMB: parseInt(document.getElementById('uploadMaxSize').value, 10)
+      }
+    };
+
+    // Check if avatar was uploaded
+    const avatarFile = document.getElementById('defaultAvatarUpload').files[0];
+    if (avatarFile) {
+      try {
+        UIUtils.showMessage('Fazendo upload do avatar...', 'info');
+        const avatarUrl = await uploadDefaultAvatar(avatarFile);
+        formData.defaultAvatar = avatarUrl;
+      } catch (error) {
+        UIUtils.showMessage('Erro ao fazer upload do avatar. Salvando outras configurações...', 'warning');
+      }
+    }
+
+    await updateConfig(formData);
+  });
+
+  // Avatar upload preview
+  document.getElementById('defaultAvatarUpload').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        document.getElementById('defaultAvatarPreview').src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
 }
 
 // Alternar entre secoes
@@ -610,28 +659,76 @@ async function loadConfig() {
     const response = await apiRequest('/admin/config');
 
     if (response.success) {
-      const { game, video, upload, rateLimit } = response.data;
+      const { defaultAvatar, inactivity, queue, video, upload } = response.data;
 
-      // Game config
-      document.getElementById('configMaxQueue').textContent = `${game.maxQueueSize} jogadores`;
-      document.getElementById('configInactivity').textContent = `${game.inactivityTimeout} segundos`;
-      document.getElementById('configMaxDuration').textContent = `${game.maxGameDuration} minutos`;
+      // Avatar padrao
+      document.getElementById('defaultAvatarUrl').textContent = defaultAvatar;
+      document.getElementById('defaultAvatarPreview').src = defaultAvatar;
+
+      // Queue config
+      document.getElementById('maxQueueSize').value = queue.maxSize;
+
+      // Inactivity config
+      document.getElementById('inactivityTimeout').value = inactivity.timeoutSeconds;
 
       // Video config
-      document.getElementById('configVideoAge').textContent = `${video.maxAgeDays} dias`;
-      document.getElementById('configVideoSize').textContent = `${video.maxSizeGB} GB`;
-      document.getElementById('configVideoFps').textContent = video.fps;
-      document.getElementById('configVideoBitrate').textContent = video.bitrate;
+      document.getElementById('videoMaxAge').value = video.maxAgeDays;
+      document.getElementById('videoMaxSize').value = video.maxSizeGB;
+      document.getElementById('videoFps').value = video.fps;
+      document.getElementById('videoBitrate').value = video.bitrate;
 
       // Upload config
-      document.getElementById('configUploadSize').textContent = `${upload.maxSizeMB} MB`;
-
-      // Rate limit config
-      document.getElementById('configRateWindow').textContent = `${Math.round(rateLimit.windowMs / 60000)} minutos`;
-      document.getElementById('configRateMax').textContent = `${rateLimit.maxRequests} requisicoes`;
+      document.getElementById('uploadMaxSize').value = upload.maxSizeMB;
     }
   } catch (error) {
     console.error('Erro ao carregar configuracoes:', error);
     UIUtils.showMessage('Erro ao carregar configuracoes.', 'error');
+  }
+}
+
+// Atualizar configuracoes
+async function updateConfig(configData) {
+  try {
+    const response = await apiRequest('/admin/config', {
+      method: 'PUT',
+      body: JSON.stringify(configData)
+    });
+
+    if (response.success) {
+      UIUtils.showMessage('Configuracoes atualizadas com sucesso!', 'success');
+      loadConfig(); // Recarregar para confirmar
+    } else {
+      UIUtils.showMessage(response.message || 'Erro ao atualizar configuracoes.', 'error');
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar configuracoes:', error);
+    UIUtils.showMessage(error.data?.message || 'Erro ao atualizar configuracoes.', 'error');
+  }
+}
+
+// Upload de avatar padrao
+async function uploadDefaultAvatar(file) {
+  try {
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const response = await fetch(`${API_BASE_URL}/upload/avatar`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      return data.data.avatarUrl;
+    } else {
+      throw new Error(data.message || 'Erro ao fazer upload do avatar');
+    }
+  } catch (error) {
+    console.error('Erro ao fazer upload:', error);
+    throw error;
   }
 }
