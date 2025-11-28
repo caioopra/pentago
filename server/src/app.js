@@ -13,6 +13,8 @@ const GameSocketService = require('./services/gameSocketService');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
+  path: '/socket.io',
+  transports: ['websocket', 'pooling'],
   cors: {
     origin: process.env.CLIENT_URL || 'http://localhost:3000',
     methods: ['GET', 'POST'],
