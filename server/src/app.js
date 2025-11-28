@@ -39,7 +39,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: isDevelopment
         ? ["'self'", "'unsafe-inline'"] // Allow inline scripts only in development
-        : ["'self'"],
+        : ["'self'", "'sha256-04m6BdEqK7pHG26C6lQZxfXyjxGQY4p0mkQqVynsCss='"],
       styleSrc: ["'self'", "'unsafe-inline'"], // CSS inline is generally safe
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: ["'self'", "ws:", "wss:", "http://localhost:*", "https://localhost:*"], // WebSocket connections
