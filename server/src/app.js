@@ -102,6 +102,9 @@ app.use(express.static(path.join(__dirname, '../../client/public')));
 // Servir arquivos de upload
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Servir a apresentação
+app.use('/presentation', express.static(path.join(__dirname, '../../presentation')));
+
 // Rota de teste
 app.get('/api/health', (req, res) => {
   res.json({
