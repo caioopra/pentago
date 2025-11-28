@@ -38,6 +38,10 @@ class PentagoGameClient {
     this.webrtcManager = null;
     this.videoChatOpen = false;
 
+    // Video Recording
+    this.videoRecorder = null;
+    this.isRecording = false;
+
     // Disconnect warning tracking
     this.disconnectWarningInterval = null;
     this.disconnectTimeRemaining = null;
@@ -148,6 +152,9 @@ class PentagoGameClient {
 
       // Inicializar WebRTC Manager para escutar ofertas
       this.initializeWebRTCManager();
+
+      // Inicializar gravação de vídeo automaticamente
+      this.initializeVideoRecording();
     });
 
     // Evento: Oponente conectou
@@ -231,6 +238,11 @@ class PentagoGameClient {
       console.log('🏁 Fim de jogo:', data);
       this.game = data.game;
       this.handleGameOver(data);
+
+      // Stop video recording
+      if (this.isRecording && this.videoRecorder) {
+        this.stopVideoRecording();
+      }
     });
 
     // Evento: Partida deletada (ambos jogadores saíram)
@@ -1812,6 +1824,156 @@ class PentagoGameClient {
     console.log('👋 Saiu da fila', data);
     if (data.success) {
       this.showMessage(data.message, 'info');
+    }
+  }
+
+  /**
+   * Render game state to canvas for video recording
+   */
+  renderGameToCanvas() {
+    const canvas = document.getElementById('gameCanvas');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+
+    // Clear canvas
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0, 0, width, height);
+
+    // Draw title
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 32px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('Pentago - Partida', width / 2, 40);
+
+    // Draw player info
+    if (this.game && this.game.player1 && this.game.player2) {
+      ctx.font = '20px Arial';
+      ctx.fillStyle = '#00ff88';
+      ctx.fillText(`⚫ ${this.game.player1.userId.name}`, width / 4, 80);
+      ctx.fillStyle = '#ff6b6b';
+      ctx.fillText(`⚪ ${this.game.player2.userId.name}`, 3 * width / 4, 80);
+    }
+
+    // Board configuration
+    const boardSize = 600;
+    const offsetX = (width - boardSize) / 2;
+    const offsetY = (height - boardSize) / 2 + 20;
+    const quadrantSize = boardSize / 2;
+    const cellSize = quadrantSize / 3;
+    const gap = 10;
+
+    // Draw board background
+    ctx.fillStyle = '#16213e';
+    ctx.fillRect(offsetX, offsetY, boardSize, boardSize);
+
+    // Draw quadrants
+    for (let q = 0; q < 4; q++) {
+      const qRow = Math.floor(q / 2);
+      const qCol = q % 2;
+      const qX = offsetX + qCol * (quadrantSize + gap);
+      const qY = offsetY + qRow * (quadrantSize + gap);
+
+      // Quadrant background
+      ctx.fillStyle = '#0f3460';
+      ctx.fillRect(qX, qY, quadrantSize - gap, quadrantSize - gap);
+
+      // Draw cells in quadrant
+      for (let c = 0; c < 9; c++) {
+        const row = Math.floor(c / 3);
+        const col = c % 3;
+        const cellX = qX + col * cellSize;
+        const cellY = qY + row * cellSize;
+
+        // Cell border
+        ctx.strokeStyle = '#1a1a2e';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cellX + 2, cellY + 2, cellSize - 4, cellSize - 4);
+
+        // Draw piece if exists
+        if (this.board && this.board[q] && this.board[q][c]) {
+          const piece = this.board[q][c];
+          const centerX = cellX + cellSize / 2;
+          const centerY = cellY + cellSize / 2;
+          const radius = cellSize / 3;
+
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+          ctx.fillStyle = piece === 'black' ? '#00ff88' : '#ff6b6b';
+          ctx.fill();
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Draw current turn indicator
+    if (this.game && this.game.currentTurn) {
+      ctx.font = '24px Arial';
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      const turnText = this.isMyTurn() ? 'Sua vez!' : 'Vez do oponente';
+      ctx.fillText(turnText, width / 2, height - 40);
+    }
+  }
+
+  /**
+   * Initialize video recording
+   */
+  async initializeVideoRecording() {
+    // Check if browser supports recording
+    if (!VideoRecorder.isSupported()) {
+      console.warn('⚠️ Gravação de vídeo não suportada neste navegador');
+      return;
+    }
+
+    try {
+      // Get game canvas
+      const canvas = document.getElementById('gameCanvas');
+      if (!canvas) {
+        console.error('❌ Canvas não encontrado');
+        return;
+      }
+
+      // Create video recorder
+      this.videoRecorder = new VideoRecorder(this.socket, this.gameId);
+
+      // Start recording automatically
+      const result = await this.videoRecorder.startRecording(canvas);
+
+      if (result.success) {
+        this.isRecording = true;
+        console.log('🎥 Gravação automática iniciada');
+      } else {
+        console.warn('⚠️ Não foi possível iniciar gravação:', result.message);
+      }
+
+    } catch (error) {
+      console.error('❌ Erro ao inicializar gravação:', error);
+    }
+  }
+
+  /**
+   * Stop video recording
+   */
+  stopVideoRecording() {
+    if (!this.videoRecorder || !this.isRecording) {
+      return;
+    }
+
+    try {
+      const result = this.videoRecorder.stopRecording();
+
+      if (result.success) {
+        this.isRecording = false;
+        console.log('🎥 Gravação finalizada');
+      }
+
+    } catch (error) {
+      console.error('❌ Erro ao parar gravação:', error);
     }
   }
 }

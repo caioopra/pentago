@@ -333,8 +333,92 @@ copyProfileLinkBtn.addEventListener('click', async () => {
   }
 });
 
+/**
+ * Load game history
+ */
+async function loadGameHistory() {
+  const loadingEl = document.getElementById('gameHistoryLoading');
+  const errorEl = document.getElementById('gameHistoryError');
+  const listEl = document.getElementById('gameHistoryList');
+  const noGamesEl = document.getElementById('noGamesHistory');
+
+  try {
+    const response = await GameAPI.getGameHistory(1, 5);
+
+    if (!response.success || !response.games || response.games.length === 0) {
+      loadingEl.style.display = 'none';
+      noGamesEl.style.display = 'block';
+      return;
+    }
+
+    const games = response.games;
+
+    // Build game history HTML
+    let html = '';
+    games.forEach(game => {
+      const isPlayer1 = game.player1.userId._id === currentUser._id;
+      const opponent = isPlayer1 ? game.player2.userId : game.player1.userId;
+
+      let resultText = 'Empate';
+      let resultClass = 'draw';
+
+      if (game.winner) {
+        if (game.winner._id === currentUser._id) {
+          resultText = 'Vitória';
+          resultClass = 'win';
+        } else {
+          resultText = 'Derrota';
+          resultClass = 'loss';
+        }
+      }
+
+      const videoLink = game.videoRecording && game.videoRecording.fileId ? `
+        <a href="/api/videos/${game.videoRecording.fileId}" target="_blank" class="video-link" title="Assistir gravação">
+          🎥 Assistir Vídeo
+        </a>
+      ` : '';
+
+      const date = new Date(game.updatedAt);
+      const dateStr = date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      html += `
+        <div style="padding: 1rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <img src="${opponent.avatar}" alt="${opponent.name}" style="width: 40px; height: 40px; border-radius: 50%;">
+            <div>
+              <div style="font-weight: 500;">${opponent.name}</div>
+              <div style="font-size: 0.85rem; color: var(--text-secondary);">${dateStr}</div>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <span class="game-result-badge ${resultClass}">${resultText}</span>
+            ${videoLink}
+          </div>
+        </div>
+      `;
+    });
+
+    listEl.innerHTML = html;
+    loadingEl.style.display = 'none';
+
+  } catch (error) {
+    console.error('Erro ao carregar histórico:', error);
+    loadingEl.style.display = 'none';
+    errorEl.style.display = 'block';
+  }
+}
+
 // Initialize share profile link
 initShareProfileLink();
 
 // Load profile data on page load
 loadProfile();
+
+// Load game history
+loadGameHistory();

@@ -124,6 +124,7 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/games', require('./routes/games'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/videos', require('./routes/videos'));
 
 // Rota padrão - servir index.html
 app.get('*', (req, res) => {
@@ -137,6 +138,10 @@ app.use(csrfErrorHandler);
 server.listen(PORT, () => {
   console.log(`🚀 Servidor rodando na porta ${PORT}`);
   console.log(`🌐 URL: http://localhost:${PORT}`);
+
+  // Start video cleanup service
+  const videoCleanupService = require('./services/videoCleanupService');
+  videoCleanupService.start();
 });
 
 module.exports = { app, server, io };

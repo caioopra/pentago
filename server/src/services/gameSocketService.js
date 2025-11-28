@@ -134,6 +134,23 @@ class GameSocketService {
         this.handleICECandidate(socket, data);
       });
 
+      // === EVENTOS DE GRAVAÇÃO DE VÍDEO ===
+
+      // Iniciar gravação
+      socket.on('start_recording', (data) => {
+        this.handleStartRecording(socket, data);
+      });
+
+      // Enviar chunk de vídeo
+      socket.on('video_chunk', (data) => {
+        this.handleVideoChunk(socket, data);
+      });
+
+      // Finalizar gravação
+      socket.on('stop_recording', (data) => {
+        this.handleStopRecording(socket, data);
+      });
+
       // Desconexão
       socket.on('disconnect', () => {
         this.handleDisconnect(socket);
@@ -867,6 +884,75 @@ class GameSocketService {
     });
 
     console.log(`📹 ICE candidate enviado na partida ${gameId}`);
+  }
+
+  /**
+   * Handler: Iniciar gravação de vídeo
+   */
+  handleStartRecording(socket, data) {
+    const { gameId } = data;
+
+    if (!gameId) {
+      socket.emit('recording_error', { message: 'Game ID não fornecido' });
+      return;
+    }
+
+    const videoRecordingService = require('./videoRecordingService');
+    const result = videoRecordingService.startRecording(gameId, {
+      initiatedBy: socket.userId
+    });
+
+    if (result.success) {
+      socket.emit('recording_started', { gameId });
+      // Notificar oponente que gravação iniciou
+      socket.to(`game_${gameId}`).emit('opponent_recording_started');
+    } else {
+      socket.emit('recording_error', { message: result.message });
+    }
+  }
+
+  /**
+   * Handler: Receber chunk de vídeo
+   */
+  async handleVideoChunk(socket, data) {
+    const { gameId, chunk } = data;
+
+    if (!gameId || !chunk) {
+      return;
+    }
+
+    const videoRecordingService = require('./videoRecordingService');
+    await videoRecordingService.receiveChunk(gameId, chunk);
+  }
+
+  /**
+   * Handler: Finalizar gravação
+   */
+  async handleStopRecording(socket, data) {
+    const { gameId } = data;
+
+    if (!gameId) {
+      socket.emit('recording_error', { message: 'Game ID não fornecido' });
+      return;
+    }
+
+    const videoRecordingService = require('./videoRecordingService');
+    const result = await videoRecordingService.stopRecording(gameId);
+
+    if (result.success) {
+      socket.emit('recording_stopped', {
+        gameId,
+        videoId: result.videoId,
+        size: result.size,
+        duration: result.duration
+      });
+      // Notificar oponente
+      socket.to(`game_${gameId}`).emit('opponent_recording_stopped', {
+        videoId: result.videoId
+      });
+    } else {
+      socket.emit('recording_error', { message: result.message });
+    }
   }
 }
 

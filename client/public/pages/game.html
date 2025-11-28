@@ -183,6 +183,9 @@
       <div id="turnNotification" class="turn-notification hidden"></div>
 
       <!-- Tabuleiro Pentago -->
+      <!-- Hidden canvas for video recording -->
+      <canvas id="gameCanvas" width="800" height="800" style="display: none;"></canvas>
+
       <div class="game-board">
         <div class="quadrant" id="quadrant-0" data-quadrant="0">
           <div class="rotate-buttons">
@@ -328,6 +331,7 @@
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/utils/api.js"></script>
   <script src="/js/utils/webrtc.js"></script>
+  <script src="/js/utils/videoRecorder.js"></script>
   <script src="/js/pages/game.js"></script>
 </body>
 

@@ -384,7 +384,7 @@ exports.getPublicProfile = async (req, res) => {
       .populate('winner', 'name')
       .sort({ updatedAt: -1 })
       .limit(5)
-      .select('player1 player2 winner result updatedAt');
+      .select('player1 player2 winner result updatedAt videoRecording');
 
     res.status(200).json({
       success: true,
@@ -426,7 +426,12 @@ exports.getPublicProfile = async (req, res) => {
             name: game.winner.name
           } : null,
           result: game.result,
-          date: game.updatedAt
+          date: game.updatedAt,
+          video: game.videoRecording && game.videoRecording.fileId ? {
+            id: game.videoRecording.fileId,
+            duration: game.videoRecording.duration,
+            size: game.videoRecording.size
+          } : null
         }))
       }
     });

@@ -73,6 +73,20 @@ const gameSchema = new mongoose.Schema({
   lastActivity: {
     type: Date,
     default: Date.now
+  },
+  videoRecording: {
+    fileId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'uploads.files'
+    },
+    filename: String,
+    size: Number,
+    uploadDate: Date,
+    duration: Number, // in seconds
+    isProcessing: {
+      type: Boolean,
+      default: false
+    }
   }
 }, {
   timestamps: true

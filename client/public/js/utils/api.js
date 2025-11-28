@@ -470,3 +470,17 @@ const UserAPI = {
     });
   }
 };
+
+/**
+ * API de Partidas
+ */
+const GameAPI = {
+  /**
+   * Obter histórico de partidas do usuário
+   */
+  async getGameHistory(page = 1, limit = 10) {
+    return await apiRequest(`/games/history?page=${page}&limit=${limit}`, {
+      method: 'GET'
+    });
+  }
+};

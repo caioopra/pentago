@@ -6,6 +6,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Meu Perfil - Pentago Web</title>
   <link rel="stylesheet" href="/css/main.css">
+  <style>
+    .game-result-badge {
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .game-result-badge.win {
+      background: var(--success-bg);
+      color: var(--success-text);
+    }
+
+    .game-result-badge.loss {
+      background: var(--error-bg);
+      color: var(--error-text);
+    }
+
+    .game-result-badge.draw {
+      background: var(--warning-bg);
+      color: var(--warning-text);
+    }
+
+    .video-link {
+      padding: 0.25rem 0.75rem;
+      background: var(--accent-color);
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      transition: background 0.3s;
+      white-space: nowrap;
+      display: inline-block;
+    }
+
+    .video-link:hover {
+      background: var(--accent-hover);
+    }
+  </style>
 </head>
 
 <body>
@@ -115,6 +155,25 @@
             <button id="deleteAccountBtn" class="btn btn-danger">
               Deletar Conta
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game History Section -->
+      <div class="card" style="margin-top: 20px;">
+        <div class="card-header">
+          <h3 class="card-title">Histórico de Partidas</h3>
+        </div>
+        <div class="card-body">
+          <div id="gameHistoryLoading" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+            Carregando histórico...
+          </div>
+          <div id="gameHistoryError" style="display: none; text-align: center; padding: 2rem; color: var(--error-text);">
+            Erro ao carregar histórico.
+          </div>
+          <div id="gameHistoryList"></div>
+          <div id="noGamesHistory" style="display: none; text-align: center; padding: 2rem; color: var(--text-secondary);">
+            Você ainda não jogou nenhuma partida.
           </div>
         </div>
       </div>

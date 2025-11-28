@@ -103,6 +103,13 @@ function renderRecentGames(games, currentUserId) {
       }
     }
 
+    // Create video link if available
+    const videoLink = game.video ? `
+      <a href="/api/videos/${game.video.id}" target="_blank" class="game-video-link" title="Assistir gravação">
+        🎥 Vídeo
+      </a>
+    ` : '';
+
     // Create game HTML
     gameItem.innerHTML = `
       <div class="game-players">
@@ -112,9 +119,10 @@ function renderRecentGames(games, currentUserId) {
         <img src="${game.player2.avatar}" alt="${game.player2.name}" class="game-avatar" title="${game.player2.name}">
         <span class="game-player-name">${game.player2.name}</span>
       </div>
-      <div>
+      <div style="display: flex; align-items: center; gap: 1rem;">
         <span class="game-result ${resultClass}">${resultText}</span>
         <span class="game-date">${formatDateTime(game.date)}</span>
+        ${videoLink}
       </div>
     `;
 

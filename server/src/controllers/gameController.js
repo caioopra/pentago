@@ -284,6 +284,7 @@ exports.getGameHistory = async (req, res) => {
       .populate('player1.userId', 'name avatar')
       .populate('player2.userId', 'name avatar')
       .populate('winner', 'name avatar')
+      .select('player1 player2 winner result status createdAt updatedAt videoRecording')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
