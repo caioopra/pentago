@@ -103,7 +103,7 @@ app.use(express.static(path.join(__dirname, '../../client/public')));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Servir a apresentação
-app.use('/presentation', express.static(path.join(__dirname, '../../presentation')));
+app.use('/apresentacao', express.static(path.join(__dirname, '../../presentation')));
 
 // Rota de teste
 app.get('/api/health', (req, res) => {
