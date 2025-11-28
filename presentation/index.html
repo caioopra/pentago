@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Pentago Web Project</title>
+
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/white.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/zenburn.min.css">
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+                    <h2>Projeto Pentago Web</h2>
+                    <p>Uma Aplicação Web Full-Stack</p>
+                    <p><small>Caio Prá Silva - 21203773</small></p>
+                    <p><small>INE5646 - Programação para Web</small></p>
+                </section>
+
+                <section>
+                    <h3>Agenda</h3>
+                    <ul style="font-size: 0.8em;">
+                        <li>Introdução ao Pentago</li>
+                        <li>Objetivos do Projeto (Usuário & Desenvolvedor)</li>
+                        <li>Tecnologias</li>
+                        <li>Arquitetura do Sistema</li>
+                        <li>Funcionalidades Principais & Demonstração</li>
+                        <li>Destaques do Código</li>
+                        <li>Aspectos de Segurança</li>
+                        <li>Conclusão</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Introdução ao Pentago</h3>
+                    <p>Pentago é um jogo de estratégia abstrato para dois jogadores.</p>
+                    <ul>
+                        <li>Os jogadores se revezam para colocar uma peça em um tabuleiro 6x6.</li>
+                        <li>Após colocar uma peça, o jogador rotaciona um dos quatro quadrantes 3x3 em 90 graus.</li>
+                        <li>O objetivo é ser o primeiro a alinhar cinco de suas peças (na horizontal, vertical ou diagonal).</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Objetivos do Projeto</h3>
+                    <div style="display: flex; justify-content: space-around;">
+                        <div style="text-align: left;">
+                            <h4><small>Como Usuário</small></h4>
+                            <ul>
+                                <li>Jogar Pentago online em tempo real.</li>
+                                <li>Desafiar amigos ou um oponente de computador.</li>
+                                <li>Acompanhar o progresso em um ranking.</li>
+                                <li>Comunicar-se com outros jogadores.</li>
+                            </ul>
+                        </div>
+                        <div style="text-align: left;">
+                            <h4><small>Como Desenvolvedor</small></h4>
+                            <ul>
+                                <li>Construir uma aplicação full-stack segura.</li>
+                                <li>Implementar uma arquitetura cliente-servidor.</li>
+                                <li>Usar WebSockets para interação em tempo real.</li>
+                                <li>Ganhar experiência com tecnologias web modernas.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <h3>Tecnologias</h3>
+                     <ul style="font-size: 0.9em;">
+                        <li><strong>Frontend:</strong> HTML5, CSS3, JavaScript (ES6+)</li>
+                        <li><strong>Backend:</strong> Node.js, Express.js</li>
+                        <li><strong>Banco de Dados:</strong> MongoDB com Mongoose</li>
+                        <li><strong>Comunicação em Tempo Real:</strong> Socket.IO</li>
+                        <li><strong>Autenticação:</strong> JSON Web Tokens (JWT)</li>
+                        <li><strong>Ambiente de Implantação:</strong> Servidor Online 24/7 (ex: VPS UFSC)</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Arquitetura do Sistema</h3>
+                    <p>Um modelo Cliente-Servidor clássico com uma divisão para APIs REST e de Tempo Real.</p>
+                    <pre style="font-size: 0.5em;"><code data-trim data-noescape>
++----------------+      +------------------------+      +---------------------+
+|                |      |                        |      |                     |
+|  Cliente       |----->|   Servidor Web (Node.js) |----->|  Banco de Dados     |
+|  (Navegador)   |      |                        |      |  (MongoDB)          |
+|                |      +------------------------+      |                     |
++----------------+                 |                     +---------------------+
+       ^                           |
+       |                           | API HTTP/REST (Stateless)
+       |                           |   - Autenticação (Login/Registro)
+       |                           |   - Perfis de Usuário
+       |                           |   - Ranking
+       |                           |
+       +---------------------------+
+       |
+       | WebSocket (Socket.IO) (Stateful)
+       |   - Jogabilidade em Tempo Real
+       |   - Matchmaking
+       |   - Chat & WebRTC
+       v
++----------------+
+|                |
+|  Conexão em    |
+|  Tempo Real    |
+|                |
++----------------+
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>Funcionalidades Principais (1/2)</h3>
+                    <ul>
+                        <li><strong>Autenticação de Usuários:</strong> Registro seguro e login baseado em JWT.</li>
+                        <li><strong>Matchmaking:</strong> Jogadores podem entrar em uma fila para serem pareados automaticamente com um oponente.</li>
+                        <li><strong>Jogabilidade em Tempo Real:</strong> Lógica de turnos Jogador vs. Jogador via WebSockets.</li>
+                        <li><strong>Jogador vs. Bot:</strong> Um oponente de IA simples para o modo de um jogador.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Funcionalidades Principais (2/2)</h3>
+                    <ul>
+                        <li><strong>Espectador de Jogos & Chat:</strong> Assista a partidas em andamento e use o chat global ou do jogo.</li>
+                        <li><strong>Video-chamada com WebRTC:</strong> Funcionalidade de chamada de vídeo entre os jogadores.</li>
+                        <li><strong>Ranking:</strong> Sistema de classificação de jogadores baseado em pontuação.</li>
+                        <li><strong>Perfis de Usuário:</strong> Visualize perfis e históricos de jogos de outros jogadores.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Demonstração</h3>
+                    <h2>Vamos ver em ação!</h2>
+                    <p>
+                        <a href="https://ine5646.pedro.nack.vms.ufsc.br" target="_blank">Abrir Pentago Web</a>
+                    </p>
+                    <p><small>(Demonstrar: Registro, Login, Entrar na Fila, Jogo, Chat, Perfil)</small></p>
+                </section>
+
+                <section>
+                    <h3>Destaques do Código: Backend</h3>
+                    <p><small>Lógica de jogo em tempo real em <code>server/src/services/gameSocketService.js</code></small></p>
+                    <pre style="font-size: 0.5em;"><code class="javascript" data-trim data-noescape>
+// server/src/services/gameSocketService.js
+
+async handlePlacePiece(socket, data) {
+    // ... autenticação e atualização de atividade ...
+
+    // Validar e processar movimento
+    const result = await validateAndPlacePiece(gameId, socket.userId, quadrant, cell);
+
+    if (!result.success) {
+        socket.emit('error', { message: result.message });
+        return;
+    }
+
+    // ... obter estado do jogo atualizado ...
+
+    // Broadcast do movimento para todos na sala E para espectadores
+    this.io.to(`game_${gameId}`).emit('piece_placed', moveData);
+    this.io.emit('spectator_piece_placed', moveData);
+
+    // ... verificar fim de jogo ...
+}
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>Destaques do Código: Frontend</h3>
+                    <p><small>Tratando eventos WebSocket em <code>client/public/js/game/game.js</code></small></p>
+                     <pre style="font-size: 0.5em;"><code class="javascript" data-trim data-noescape>
+// client/public/js/game/game.js
+
+socket.on('piece_placed', (data) => {
+  console.log('Peça colocada:', data);
+  // Atualizar o estado do tabuleiro na UI
+  updateBoardState(data.gameState.boardState);
+  // Atualizar de quem é a vez
+  updateTurnInfo(data.gameState.currentTurn);
+  // Mudar a fase do jogo para rotação
+  setGamePhase(data.gameState.gamePhase);
+});
+
+socket.on('quadrant_rotated', (data) => {
+    console.log('Quadrante rotacionado:', data);
+    // Animar a rotação do quadrante na UI
+    animateQuadrantRotation(data.quadrant, data.direction, () => {
+        // Atualizar o estado do tabuleiro e turno após a animação
+        updateBoardState(data.gameState.boardState);
+        updateTurnInfo(data.gameState.currentTurn);
+        setGamePhase(data.gameState.gamePhase);
+    });
+});
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h3>Aspectos de Segurança (1/2)</h3>
+                    <ul>
+                        <li><strong>Autenticação Robusta:</strong> Uso de JWT (JSON Web Tokens) para sessões stateless seguras, protegendo rotas da API e eventos WebSocket.</li>
+                        <li><strong>Segurança de Senhas:</strong> Senhas nunca são salvas em texto plano; utilizamos hashing forte com <code>bcrypt</code> e sal.</li>
+                        <li><strong>Validação de Entrada:</strong> Validação rigorosa no backend (Schema Validation) para garantir que apenas dados esperados sejam processados.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Aspectos de Segurança (2/2)</h3>
+                    <ul style="font-size: 0.75em;">
+                        <li><strong>Prevenção XSS:</strong> Sanitização de inputs e escapamento no frontend contra injeção de scripts.</li>
+                        <li><strong>Rate Limiting:</strong> Limite de requisições por IP para mitigar ataques de força bruta e DoS.</li>
+                        <li><strong>Variáveis de Ambiente:</strong> Segredos (chaves, senhas) isolados em <code>.env</code>.</li>
+                        <li><strong>Proteção CSRF:</strong> Validação de origem/tokens contra falsificação de solicitações.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>Conclusão</h2>
+                    <div style="font-size: 0.7em; text-align: left; margin-bottom: 0.5em;">
+                        <p>O projeto atingiu o objetivo de criar uma plataforma Web completa, segura e em tempo real.</p>
+                    </div>
+
+                    <div style="display: flex; justify-content: center; gap: 1em; font-size: 0.65em; text-align: left;">
+                        <div style="flex: 1;">
+                            <strong>Aprendizados:</strong>
+                            <ul>
+                                <li>Estados via WebSockets.</li>
+                                <li>Arquitetura MVC.</li>
+                                <li>Segurança Full-Stack.</li>
+                            </ul>
+                        </div>
+                        <div style="flex: 1;">
+                            <strong>Próximos Passos:</strong>
+                            <ul>
+                                <li>IA (Minimax).</li>
+                                <li>Sistema de Torneios.</li>
+                                <li>Responsividade Mobile.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1em;">
+                        <h3>Obrigado!</h3>
+                        <p style="font-size: 0.8em;">Perguntas?</p>
+                    </div>
+                </section>
+			</div>
+		</div>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/markdown/markdown.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/notes/notes.min.js"></script>
+		<script>
+			Reveal.initialize({
+				hash: true,
+                plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+			});
+		</script>
+	</body>
+</html>

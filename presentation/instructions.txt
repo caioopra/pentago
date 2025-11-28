@@ -1,0 +1,178 @@
+Moodle UFSC - Presencial
+
+  Caio Prá Silva (21203773)
+
+INE5646-03238A (20252) - Programação para Web
+Painel / Cursos / INE5646-03238A (20252) / Help / Instruções para o PW
+
+Índice
+
+Instruções para o PW
+
+1. Projeto Web
+2. Requisitos da aplicação web
+
+Anterior
+
+Próximo
+
+3. Temas disponíveis
+4. Escrita do projeto
+4.1. Sobre a escrita
+5. Apresentação do projeto
+
+5. Apresentação do projeto
+
+6. Critérios de pontuação
+
+Estas são as condições para apresentação do Projeto Web (AP).
+
+7. Entrega
+
+1. Tempo de apresentação: 20 minutos com 5 minutos de tolerância.
+
+8. FAQ
+
+2. Apresentação deverá ser pensado tanto no ponto de vista de desenvolvedor quanto de usuário.
+3. A nota da da apresentação serão individual, conforme desempenho do integrante do grupo.
+4. Apresente a parte teórica de forma sucinta.
+5. Apresente as principais partes do código.
+
+Administração
+
+. Faça a demonstração prática do projeto web com todas as funcionalidades.
+
+ Administração de livros
+Imprimir o livro todo
+
+1. Autenticação.
+2. Cadastro.
+
+Imprimir este capítulo
+
+3. Use de base de dados (back-end).
+4. Compartilhamento de dados de usuários.
+7. Discuta e apresente os aspectos de segurança envolvidos no projeto.
+. Evite temas (templates para apresentação) escuros, pois diﬁcultam a visualização em datashow.
+Antes de prosseguir com o tema escolhido, teste-o com datashow em uma sala de aula.
+
+Navegação
+
+9. Requisitos:
+1. A apresentação deverá ser implementada em HTML, CSS e JavaScript em formato de slide/frame.
+Frameworks:
+
+ Painel
+ Página inicial do site
+
+https://revealjs.com.
+
+ Moodle UFSC - Presencial
+
+𝐴
+Integração com 𝐿𝑇
+𝐸𝑋 .
+
+ Meus cursos
+
+Example Presentations.
+Plugins, Tools and Hardware
+
+ INE5432-07208 (20241)
+ INE5428-07208 (20241)
+
+https://quarto.org.
+
+ INE5453-06208 (20242)
+
+𝐴
+Integração com 𝐿𝑇
+𝐸𝑋 , Python.
+
+ INE5430-06208 (20242)
+
+https://impress.js.org.
+https://github.com/slidevjs/slidev.
+
+ INE5426-06208 (20242)
+
+https://sli.dev.
+
+ INE5433-07208 (20251)
+
+https://github.com/FormidableLabs/spectacle.
+
+ INE5418-05208 (20251)
+
+https://github.com/webpro/reveal-md.
+https://github.com/webslides/WebSlides.
+
+ INE5429-07208 (20252)
+ INE5434-08208 (20252)
+
+2. Servidor online 24/7.
+
+ INE5664-07238 (20242)
+
+Servidor Virtual UFSC.
+
+ Mais...
+
+3. Poderão ser incorporados recursos HTML/CSS/JS na apresentação para incorporar e/ou referenciar o projeto, e.g., <embed> (menos seguro), <iframe>, links (<a>).
+
+ Cursos
+ INE5646-03238A (20252)
+Anterior
+
+ Competências
+
+Próximo
+
+ Notas
+
+
+ⓘ ToDo
+
+ Professor
+
+◄ Atividades Previstas
+
+ Ensalamento
+ Comunicação
+ Calendário
+ Docs
+ Frequência
+ AA
+ P2
+ PW
+ Notas de Aula
+ Sources Codes
+ Material Complementar
+ Tools
+ Help
+Atividades Previstas
+Instruções para o PW
+Servidor Virtual [UFSC]
+VPS-UFSC
+VPN UFSC [howto]
+VPN UFSC no Android
+[acesso: Rede UFSC/VPN]
+redeUFSCSemFio
+eduroam
+eduroam [Linux]
+Identidade Visual UFSC
+Servidor HTTP com Python
+
+ Livros
+
+ Contate o suporte do site 
+Você acessou como Caio Prá Silva (21203773) (Sair)
+INE5646-03238A (20252)
+
+Seguir para...
+
+Servidor Virtual [UFSC] ►
+
+
+
+
