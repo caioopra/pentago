@@ -40,12 +40,12 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: isDevelopment
-        ? ["'self'", "'unsafe-inline'"] // Allow inline scripts only in development
-        : ["'self'", "'sha256-04m6BdEqK7pHG26C6lQZxfXyjxGQY4p0mkQqVynsCss='"],
-      styleSrc: ["'self'", "'unsafe-inline'"], // CSS inline is generally safe
+        ? ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"] // Allow inline scripts only in development
+        : ["'self'", "'sha256-04m6BdEqK7pHG26C6lQZxfXyjxGQY4p0mkQqVynsCss='", "https://cdnjs.cloudflare.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"], // CSS inline is generally safe
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: ["'self'", "ws:", "wss:", "http://localhost:*", "https://localhost:*"], // WebSocket connections
-      fontSrc: ["'self'", "data:"],
+      fontSrc: ["'self'", "data:", "https://cdnjs.cloudflare.com"],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'", "blob:", "mediastream:"], // Allow WebRTC media streams
       frameSrc: ["'none'"],
