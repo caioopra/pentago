@@ -135,10 +135,9 @@ async function apiRequest(endpoint, options = {}) {
 
   try {
     console.log('📤 API Request:', method, url);
-    console.log('📋 Headers:', config.headers);
     const response = await fetch(url, config);
     const data = await response.json();
-    console.log('📥 API Response:', response.status, data);
+    console.log('📥 API Response:', response.status);
 
     if (!response.ok) {
       // Se erro CSRF, buscar novo token e tentar novamente
@@ -176,7 +175,6 @@ async function apiRequest(endpoint, options = {}) {
     // Se for erro de rede
     console.error('❌ API Error:', error);
     console.error('Request URL:', url);
-    console.error('Request config:', config);
     if (!error.status) {
       throw {
         status: 0,

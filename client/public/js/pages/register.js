@@ -76,9 +76,7 @@ form.addEventListener('submit', async (e) => {
   submitBtn.textContent = 'Cadastrando...';
 
   try {
-    console.log('Enviando dados de registro:', formData);
     const response = await AuthAPI.register(formData);
-    console.log('Resposta recebida:', response);
 
     if (response.success) {
       // Show success message

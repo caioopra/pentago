@@ -46,9 +46,7 @@ form.addEventListener('submit', async (e) => {
   submitBtn.textContent = 'Entrando...';
 
   try {
-    console.log('Enviando credenciais de login...');
     const response = await AuthAPI.login(credentials);
-    console.log('Resposta recebida:', response);
 
     if (response.success) {
       // Show success message
