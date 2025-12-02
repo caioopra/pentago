@@ -745,11 +745,13 @@ async function uploadDefaultAvatar(file) {
       headers['x-csrf-token'] = csrfToken;
     }
 
-    const response = await fetch(`${API_BASE_URL}/upload/default-avatar`, {
+    // Build URL to avoid credential parsing issues
+    const url = new URL(`${API_BASE_URL}/upload/default-avatar`, window.location.origin);
+    const response = await fetch(url.toString(), {
       method: 'POST',
       headers: headers,
       body: formData,
-      credentials: 'include'
+      credentials: 'same-origin'
     });
 
     const data = await response.json();

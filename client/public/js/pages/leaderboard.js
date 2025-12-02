@@ -15,7 +15,9 @@ class LeaderboardPage {
 
   async fetchLeaderboard() {
     try {
-      const response = await fetch('/api/users/leaderboard/full');
+      // Build absolute URL to avoid credential parsing issues
+      const url = new URL('/api/users/leaderboard/full', window.location.origin);
+      const response = await fetch(url.toString());
       const data = await response.json();
 
       if (data.success) {
