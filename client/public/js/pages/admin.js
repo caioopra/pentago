@@ -449,7 +449,7 @@ async function banUser() {
     const reason = document.getElementById('banReason').value || 'Motivo nao especificado';
     const response = await apiRequest(`/admin/users/${state.currentUserId}/ban`, {
       method: 'PUT',
-      body: JSON.stringify({ reason })
+      body: { reason }
     });
 
     if (response.success) {
