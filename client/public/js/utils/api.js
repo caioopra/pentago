@@ -39,9 +39,14 @@ class AuthManager {
 
   static async fetchCsrfToken() {
     try {
-      const response = await fetch('/api/csrf-token', {
+      // Build absolute URL to avoid any credential parsing issues
+      const url = new URL('/api/csrf-token', window.location.origin);
+      const response = await fetch(url.toString(), {
         method: 'GET',
-        credentials: 'same-origin'
+        credentials: 'same-origin',
+        headers: {
+          'Accept': 'application/json'
+        }
       });
       const data = await response.json();
       if (data.success && data.csrfToken) {
@@ -50,6 +55,7 @@ class AuthManager {
       }
     } catch (error) {
       console.error('Erro ao obter token CSRF:', error);
+      console.error('URL tentada:', window.location.origin + '/api/csrf-token');
     }
     return null;
   }
