@@ -88,7 +88,8 @@ class AuthManager {
  * Função auxiliar para fazer requisições HTTP
  */
 async function apiRequest(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
+  // Build URL using URL constructor to avoid credential parsing issues
+  const url = new URL(`${API_BASE_URL}${endpoint}`, window.location.origin).toString();
 
   const defaultHeaders = {};
 
@@ -133,8 +134,11 @@ async function apiRequest(endpoint, options = {}) {
   }
 
   try {
+    console.log('📤 API Request:', method, url);
+    console.log('📋 Headers:', config.headers);
     const response = await fetch(url, config);
     const data = await response.json();
+    console.log('📥 API Response:', response.status, data);
 
     if (!response.ok) {
       // Se erro CSRF, buscar novo token e tentar novamente
@@ -170,11 +174,15 @@ async function apiRequest(endpoint, options = {}) {
     return data;
   } catch (error) {
     // Se for erro de rede
+    console.error('❌ API Error:', error);
+    console.error('Request URL:', url);
+    console.error('Request config:', config);
     if (!error.status) {
       throw {
         status: 0,
         message: 'Erro de conexão com o servidor',
-        data: null
+        data: null,
+        originalError: error
       };
     }
     throw error;
