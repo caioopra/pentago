@@ -41,7 +41,7 @@ class AuthManager {
     try {
       const response = await fetch('/api/csrf-token', {
         method: 'GET',
-        credentials: 'include'
+        credentials: 'same-origin'
       });
       const data = await response.json();
       if (data.success && data.csrfToken) {
@@ -114,7 +114,7 @@ async function apiRequest(endpoint, options = {}) {
 
   const config = {
     ...options,
-    credentials: 'include', // Importante para cookies CSRF
+    credentials: 'same-origin', // Importante para cookies CSRF
     headers: {
       ...defaultHeaders,
       ...options.headers,
