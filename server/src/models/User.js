@@ -43,6 +43,10 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  lastWinDate: {
+    type: Date,
+    default: null
+  },
   isOnline: {
     type: Boolean,
     default: false

@@ -172,9 +172,12 @@ class InactivityService {
       game.result = isPlayer1 ? 'player2_win' : 'player1_win';
       await game.save();
 
-      // Update player scores (winner gets +3 points)
+      // Update player scores (winner gets +3 points) and last win date
       const User = require('../models/User');
-      await User.findByIdAndUpdate(winnerId, { $inc: { score: 3 } });
+      await User.findByIdAndUpdate(winnerId, {
+        $inc: { score: 3 },
+        lastWinDate: new Date()
+      });
       console.log(`📊 ${winnerName} recebeu +3 pontos por vitória (timeout do oponente)`);
 
       // Notify both players via Socket.io

@@ -81,10 +81,12 @@ class LeaderboardPage {
     const avatar = element.querySelector('.podium-avatar');
     const name = element.querySelector('.podium-name');
     const score = element.querySelector('.podium-score');
+    const lastWin = element.querySelector('.podium-last-win');
 
     if (avatar) avatar.src = user.avatar || '/assets/img/avatars/default.png';
     if (name) name.textContent = user.name;
     if (score) score.textContent = `${user.score} pts`;
+    if (lastWin) lastWin.textContent = this.formatLastWinDate(user.lastWinDate);
   }
 
   renderTable() {
@@ -129,6 +131,13 @@ class LeaderboardPage {
       scoreCell.innerHTML = `<span class="score-value">${user.score}</span>`;
       row.appendChild(scoreCell);
 
+      // Last Win Date
+      const lastWinCell = document.createElement('td');
+      lastWinCell.className = 'col-last-win';
+      const lastWinText = this.formatLastWinDate(user.lastWinDate);
+      lastWinCell.innerHTML = `<span class="last-win-text">${lastWinText}</span>`;
+      row.appendChild(lastWinCell);
+
       // Location
       const locationCell = document.createElement('td');
       locationCell.className = 'col-location';
@@ -171,6 +180,25 @@ class LeaderboardPage {
     if (user.country) parts.push(user.country);
 
     return parts.length > 0 ? parts.join(', ') : 'Não informado';
+  }
+
+  formatLastWinDate(lastWinDate) {
+    if (!lastWinDate) {
+      return 'Nenhuma vitória';
+    }
+
+    const date = new Date(lastWinDate);
+
+    // Format date as DD/MM/YYYY
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+
+    // Format time as HH:MM
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
   }
 
   showError(message) {

@@ -284,7 +284,7 @@ exports.getFullLeaderboard = async (req, res) => {
   try {
     // Fetch all non-admin users sorted by score
     const users = await User.find({ role: { $ne: 'admin' } })
-      .select('name email avatar score age city state country createdAt')
+      .select('name email avatar score age city state country createdAt lastWinDate')
       .sort({ score: -1, createdAt: 1 });
 
     // Add rank to each user
@@ -299,6 +299,7 @@ exports.getFullLeaderboard = async (req, res) => {
       state: user.state,
       country: user.country,
       createdAt: user.createdAt,
+      lastWinDate: user.lastWinDate,
       rank: index + 1
     }));
 

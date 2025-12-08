@@ -83,6 +83,7 @@ const updatePlayerScores = async (game) => {
   try {
     const player1Id = game.player1.userId._id || game.player1.userId;
     const player2Id = game.player2.userId._id || game.player2.userId;
+    const currentDate = new Date();
 
     if (game.result === 'draw') {
       // Empate: +1 ponto para ambos
@@ -90,12 +91,18 @@ const updatePlayerScores = async (game) => {
       await User.findByIdAndUpdate(player2Id, { $inc: { score: 1 } });
       console.log(`📊 Empate - Ambos jogadores receberam +1 ponto`);
     } else if (game.result === 'player1_win') {
-      // Jogador 1 venceu: +3 pontos
-      await User.findByIdAndUpdate(player1Id, { $inc: { score: 3 } });
+      // Jogador 1 venceu: +3 pontos e atualiza data da última vitória
+      await User.findByIdAndUpdate(player1Id, {
+        $inc: { score: 3 },
+        lastWinDate: currentDate
+      });
       console.log(`📊 Jogador 1 venceu e recebeu +3 pontos`);
     } else if (game.result === 'player2_win') {
-      // Jogador 2 venceu: +3 pontos
-      await User.findByIdAndUpdate(player2Id, { $inc: { score: 3 } });
+      // Jogador 2 venceu: +3 pontos e atualiza data da última vitória
+      await User.findByIdAndUpdate(player2Id, {
+        $inc: { score: 3 },
+        lastWinDate: currentDate
+      });
       console.log(`📊 Jogador 2 venceu e recebeu +3 pontos`);
     }
   } catch (error) {

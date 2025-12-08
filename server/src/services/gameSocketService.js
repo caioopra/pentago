@@ -602,9 +602,12 @@ class GameSocketService {
       game.result = isPlayer1 ? 'player2_win' : 'player1_win';
       await game.save();
 
-      // Atualizar pontuação do vencedor (+3 pontos)
+      // Atualizar pontuação do vencedor (+3 pontos) e data da última vitória
       const User = require('../models/User');
-      await User.findByIdAndUpdate(winnerId, { $inc: { score: 3 } });
+      await User.findByIdAndUpdate(winnerId, {
+        $inc: { score: 3 },
+        lastWinDate: new Date()
+      });
       console.log(`📊 ${winnerName} recebeu +3 pontos por vitória (desconexão do oponente)`);
 
       // Notificar ambos jogadores via Socket.io
