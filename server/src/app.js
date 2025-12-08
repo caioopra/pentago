@@ -144,4 +144,4 @@ server.listen(PORT, () => {
   console.log(`🌐 URL: http://localhost:${PORT}`);
 });
 
-module.exports = { app, server, io };
+module.exports = { app, server, io, gameSocketService };

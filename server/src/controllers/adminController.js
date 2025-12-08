@@ -474,10 +474,10 @@ exports.updateConfig = async (req, res) => {
       updates.queue = {};
       if (req.body.queue.maxSize !== undefined) {
         const maxSize = parseInt(req.body.queue.maxSize, 10);
-        if (maxSize < 2 || maxSize > 100) {
+        if (maxSize < 0 || maxSize > 100) {
           return res.status(400).json({
             success: false,
-            message: 'Tamanho máximo da fila deve estar entre 2 e 100.'
+            message: 'Tamanho máximo da fila deve estar entre 0 e 100 (0 desabilita a fila).'
           });
         }
         updates.queue.maxSize = maxSize;
@@ -536,6 +536,19 @@ exports.updateConfig = async (req, res) => {
     }
 
     const config = await Config.updateConfig(updates);
+
+    // Reload configurations in services if they were updated
+    if (updates.queue) {
+      const { gameSocketService } = require('../app');
+      const queueService = gameSocketService.getQueueService();
+      await queueService.loadConfig();
+    }
+
+    if (updates.inactivity) {
+      const { gameSocketService } = require('../app');
+      const inactivityService = gameSocketService.inactivityService;
+      await inactivityService.loadConfig();
+    }
 
     res.json({
       success: true,
